@@ -10,5 +10,9 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "pre-commit>=4.2.0",
+    "pymarkdownlnt>=0.9.30",
+    "ruff>=0.11.12",
+    "ty>=0.0.1a7",
     "watchdog>=6.0.0",
 ]
