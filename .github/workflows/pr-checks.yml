@@ -36,7 +36,7 @@ jobs:
         uv run mypy chemscreen/ || exit 1
 
         echo "4. Markdown linting..."
-        uv run pymarkdownlnt **/*.md || exit 1
+        uv run pymarkdownlnt scan **/*.md || exit 1
 
         echo "5. Running tests..."
         uv run pytest || exit 1
