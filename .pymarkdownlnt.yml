@@ -1,0 +1,18 @@
+# PyMarkdownLnt configuration
+# Documentation: https://github.com/jackdewinter/pymarkdown
+
+# Disable rules that are too strict for this project
+plugins:
+  # MD013: Line length - 80 chars is too restrictive for modern displays
+  line-length:
+    enabled: false
+
+  # MD022: Blank lines around headings - not always necessary
+  blanks-around-headings:
+    enabled: true
+    lines_above: 1
+    lines_below: 1
+
+# Global configuration
+mode:
+  strict: false
