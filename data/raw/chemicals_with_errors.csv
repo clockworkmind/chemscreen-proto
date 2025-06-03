@@ -1,0 +1,8 @@
+Chemical,CAS_Number,Comment
+Benzene,71-43-2,Valid entry
+Unknown Chemical,invalid-cas,Invalid CAS format
+,75-09-2,Missing name
+Toluene,,Missing CAS
+,,"Empty row"
+Duplicate,71-43-2,Duplicate CAS
+DUPLICATE,108-88-3,Case variation

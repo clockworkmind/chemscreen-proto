@@ -32,6 +32,7 @@ dev = [
     "types-aiofiles>=24.1.0.20241221",
     "types-openpyxl>=3.1.0",
     "watchdog>=6.0.0",
+    "pandas-stubs>=2.2.3.250527",
 ]
 
 [tool.mypy]
@@ -60,3 +61,10 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "xmltodict.*"
 ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+testpaths = ["tests"]
+pythonpath = ["."]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"

@@ -1,19 +1,49 @@
 """Data models for ChemScreen using Pydantic."""
 
 from datetime import datetime
-from typing import Optional, List, Dict
-from pydantic import BaseModel, Field, ConfigDict
+from typing import Optional, List, Dict, Any
+from pydantic import BaseModel, Field, ConfigDict, field_validator
+import re
 
 
 class Chemical(BaseModel):
     """Chemical entity with name and CAS number."""
 
-    name: str = Field(..., description="Chemical name")
+    name: str = Field(..., description="Chemical name", min_length=1)
     cas_number: Optional[str] = Field(None, description="CAS Registry Number")
     synonyms: List[str] = Field(default_factory=list, description="Alternative names")
     validated: bool = Field(
         False, description="Whether the chemical has been validated"
     )
+    notes: Optional[str] = Field(None, description="Additional notes or comments")
+
+    @field_validator("cas_number")
+    @classmethod
+    def validate_cas_format(cls, v: Optional[str]) -> Optional[str]:
+        """Validate CAS number format (e.g., 75-09-2)."""
+        if v is None or v == "":
+            return None
+
+        # Remove any whitespace
+        v = v.strip()
+
+        # Basic CAS format check: XXXXXX-XX-X where X is a digit
+        cas_pattern = re.compile(r"^\d{2,7}-\d{2}-\d$")
+        if not cas_pattern.match(v):
+            raise ValueError(
+                f"Invalid CAS number format: {v}. Expected format: XXXXXX-XX-X"
+            )
+
+        return v
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v: str) -> str:
+        """Validate chemical name is not empty."""
+        v = v.strip()
+        if not v:
+            raise ValueError("Chemical name cannot be empty")
+        return v
 
     model_config = ConfigDict(validate_assignment=True)
 
@@ -118,5 +148,52 @@ class ExportData(BaseModel):
     export_format: str = Field("csv", description="Export format: csv/xlsx/json")
     include_metadata: bool = Field(True, description="Include search metadata")
     include_abstracts: bool = Field(False, description="Include publication abstracts")
+
+    model_config = ConfigDict(validate_assignment=True)
+
+
+class CSVUploadResult(BaseModel):
+    """Result of CSV file processing."""
+
+    total_rows: int = Field(..., description="Total number of rows in CSV")
+    valid_chemicals: List[Chemical] = Field(
+        default_factory=list, description="Successfully validated chemicals"
+    )
+    invalid_rows: List[Dict[str, Any]] = Field(
+        default_factory=list, description="Rows with validation errors"
+    )
+    warnings: List[str] = Field(default_factory=list, description="Non-fatal warnings")
+    column_mapping: Dict[str, str] = Field(
+        default_factory=dict, description="Mapping of CSV columns to fields"
+    )
+
+    @property
+    def success_rate(self) -> float:
+        """Calculate the success rate of validation."""
+        if self.total_rows == 0:
+            return 0.0
+        return len(self.valid_chemicals) / self.total_rows * 100
+
+    model_config = ConfigDict(validate_assignment=True)
+
+
+class CSVColumnMapping(BaseModel):
+    """Mapping configuration for CSV columns."""
+
+    name_column: Optional[str] = Field(None, description="Column for chemical names")
+    cas_column: Optional[str] = Field(None, description="Column for CAS numbers")
+    synonyms_column: Optional[str] = Field(None, description="Column for synonyms")
+    notes_column: Optional[str] = Field(None, description="Column for notes")
+
+    @field_validator("name_column", "cas_column")
+    @classmethod
+    def at_least_one_required(cls, v: Optional[str], info: Any) -> Optional[str]:
+        """Ensure at least name or CAS column is specified."""
+        if info.field_name == "cas_column" and v is None:
+            if info.data.get("name_column") is None:
+                raise ValueError(
+                    "At least one of name_column or cas_column must be specified"
+                )
+        return v
 
     model_config = ConfigDict(validate_assignment=True)
