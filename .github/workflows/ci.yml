@@ -34,7 +34,7 @@ jobs:
       run: uv run mypy chemscreen/
 
     - name: Run Markdown linter
-      run: uv run pymarkdownlnt scan **/*.md
+      run: uv run pymarkdownlnt --config .pymarkdownlnt.yml scan **/*.md
 
   test:
     runs-on: ubuntu-latest
