@@ -1,10 +1,13 @@
 """Chemical processor module for validation and standardization."""
 
 import re
-from typing import List, Optional, Tuple, Dict
+from typing import List, Optional, Tuple, Dict, Any
 import logging
+import pandas as pd
+from io import StringIO
 
-from chemscreen.models import Chemical
+from chemscreen.models import Chemical, CSVUploadResult, CSVColumnMapping
+from pydantic import ValidationError
 
 logger = logging.getLogger(__name__)
 
@@ -130,6 +133,7 @@ def parse_chemical_list(
             name=standardize_chemical_name(name) if name else f"CAS {cas}",
             cas_number=cas if cas else None,
             validated=validated,
+            notes=None,
         )
 
         chemicals.append(chemical)
@@ -236,3 +240,236 @@ def expand_abbreviations(name: str) -> Tuple[str, List[str]]:
         return full_name, [name]
 
     return name, []
+
+
+def process_csv_data(
+    df: pd.DataFrame,
+    column_mapping: CSVColumnMapping,
+) -> CSVUploadResult:
+    """
+    Process CSV data into validated Chemical objects.
+
+    Args:
+        df: DataFrame containing CSV data
+        column_mapping: Column mapping configuration
+
+    Returns:
+        CSVUploadResult with validated chemicals and error information
+    """
+    result = CSVUploadResult(
+        total_rows=len(df),
+        column_mapping={
+            "name": column_mapping.name_column or "",
+            "cas": column_mapping.cas_column or "",
+            "synonyms": column_mapping.synonyms_column or "",
+            "notes": column_mapping.notes_column or "",
+        },
+    )
+
+    # Process each row
+    for idx, row in df.iterrows():
+        try:
+            # Convert idx to int for arithmetic operations
+            row_num = int(str(idx)) + 1
+            # Extract data based on column mapping
+            chemical_data: Dict[str, Any] = {}
+
+            # Name (required if no CAS)
+            if column_mapping.name_column:
+                name = str(row.get(column_mapping.name_column, "")).strip()
+                if name and name.lower() not in ["nan", "none", "null"]:
+                    chemical_data["name"] = name
+
+            # CAS number (required if no name)
+            if column_mapping.cas_column:
+                cas = str(row.get(column_mapping.cas_column, "")).strip()
+                if cas and cas.lower() not in ["nan", "none", "null"]:
+                    chemical_data["cas_number"] = cas
+
+            # Optional fields
+            if column_mapping.synonyms_column:
+                synonyms = str(row.get(column_mapping.synonyms_column, "")).strip()
+                if synonyms and synonyms.lower() not in ["nan", "none", "null"]:
+                    # Split synonyms by common delimiters
+                    syn_list = re.split(r"[;,|]", synonyms)
+                    chemical_data["synonyms"] = [
+                        s.strip() for s in syn_list if s.strip()
+                    ]
+            else:
+                chemical_data["synonyms"] = []
+
+            if column_mapping.notes_column:
+                notes = str(row.get(column_mapping.notes_column, "")).strip()
+                if notes and notes.lower() not in ["nan", "none", "null"]:
+                    chemical_data["notes"] = notes
+
+            # Skip empty rows
+            if not chemical_data.get("name") and not chemical_data.get("cas_number"):
+                result.warnings.append(
+                    f"Row {row_num}: Skipped - no chemical name or CAS number"
+                )
+                continue
+
+            # If we have a name but no CAS, or vice versa, provide a default
+            if not chemical_data.get("name") and chemical_data.get("cas_number"):
+                chemical_data["name"] = (
+                    f"Chemical with CAS {chemical_data['cas_number']}"
+                )
+            elif chemical_data.get("name") and not chemical_data.get("cas_number"):
+                # Name exists, CAS is optional
+                pass
+
+            # Expand abbreviations if applicable
+            if chemical_data.get("name"):
+                expanded_name, abbrev_synonyms = expand_abbreviations(
+                    chemical_data["name"]
+                )
+                if expanded_name != chemical_data["name"]:
+                    chemical_data["name"] = expanded_name
+                    existing_synonyms: List[str] = chemical_data.get("synonyms", [])
+                    chemical_data["synonyms"] = list(
+                        set(existing_synonyms + abbrev_synonyms)
+                    )
+
+            # Create and validate Chemical object
+            chemical = Chemical(**chemical_data)
+
+            # Additional CAS validation with checksum
+            if chemical.cas_number:
+                if validate_cas_number(chemical.cas_number):
+                    chemical.validated = True
+                else:
+                    chemical.validated = False
+                    result.warnings.append(
+                        f"Row {row_num}: CAS number {chemical.cas_number} failed checksum validation"
+                    )
+            else:
+                # No CAS number to validate
+                chemical.validated = True
+
+            result.valid_chemicals.append(chemical)
+
+        except ValidationError as e:
+            # Pydantic validation error
+            error_details = {
+                "row_number": row_num,
+                "row_data": row.to_dict(),
+                "errors": [
+                    {"field": err["loc"][0], "message": err["msg"]}
+                    for err in e.errors()
+                ],
+            }
+            result.invalid_rows.append(error_details)
+            logger.error(f"Row {row_num} validation error: {e}")
+
+        except Exception as e:
+            # Other unexpected errors
+            error_details = {
+                "row_number": row_num,
+                "row_data": row.to_dict(),
+                "errors": [{"field": "unknown", "message": str(e)}],
+            }
+            result.invalid_rows.append(error_details)
+            logger.error(f"Row {row_num} processing error: {e}")
+
+    # Check for duplicates
+    if result.valid_chemicals:
+        duplicates = detect_duplicates(result.valid_chemicals)
+        if duplicates:
+            for dup1, dup2 in duplicates:
+                chem1 = result.valid_chemicals[dup1]
+                chem2 = result.valid_chemicals[dup2]
+                result.warnings.append(
+                    f"Duplicate detected: '{chem1.name}' (index {dup1}) "
+                    f"and '{chem2.name}' (index {dup2})"
+                )
+
+    return result
+
+
+def validate_csv_file(
+    file_content: str, delimiter: str = ",", encoding: str = "utf-8"
+) -> Tuple[bool, Optional[pd.DataFrame], Optional[str]]:
+    """
+    Validate CSV file format and structure.
+
+    Args:
+        file_content: CSV file content as string
+        delimiter: CSV delimiter
+        encoding: File encoding
+
+    Returns:
+        Tuple of (is_valid, dataframe, error_message)
+    """
+    try:
+        # Try to read CSV
+        df = pd.read_csv(StringIO(file_content), delimiter=delimiter)
+
+        # Check if empty
+        if df.empty:
+            return False, None, "CSV file is empty"
+
+        # Check if has columns
+        if len(df.columns) == 0:
+            return False, None, "CSV file has no columns"
+
+        # Check for at least 1 data row
+        if len(df) == 0:
+            return False, None, "CSV file has no data rows"
+
+        return True, df, None
+
+    except pd.errors.EmptyDataError:
+        return False, None, "CSV file is empty or invalid"
+    except pd.errors.ParserError as e:
+        return False, None, f"CSV parsing error: {str(e)}"
+    except Exception as e:
+        return False, None, f"Unexpected error reading CSV: {str(e)}"
+
+
+def suggest_column_mapping(df: pd.DataFrame) -> CSVColumnMapping:
+    """
+    Suggest column mapping based on column names.
+
+    Args:
+        df: DataFrame with CSV data
+
+    Returns:
+        CSVColumnMapping with suggested mappings
+    """
+    columns_lower = {col.lower(): col for col in df.columns}
+
+    # Try to find name column
+    name_column = None
+    for pattern in ["name", "chemical_name", "chemical name", "compound", "substance"]:
+        if pattern in columns_lower:
+            name_column = columns_lower[pattern]
+            break
+
+    # Try to find CAS column
+    cas_column = None
+    for pattern in ["cas", "cas_number", "cas number", "cas_no", "casrn", "cas rn"]:
+        if pattern in columns_lower:
+            cas_column = columns_lower[pattern]
+            break
+
+    # Try to find synonyms column
+    synonyms_column = None
+    for pattern in ["synonyms", "synonym", "alternative names", "other names"]:
+        if pattern in columns_lower:
+            synonyms_column = columns_lower[pattern]
+            break
+
+    # Try to find notes column
+    notes_column = None
+    for pattern in ["notes", "note", "comments", "comment", "remarks"]:
+        if pattern in columns_lower:
+            notes_column = columns_lower[pattern]
+            break
+
+    return CSVColumnMapping(
+        name_column=name_column,
+        cas_column=cas_column,
+        synonyms_column=synonyms_column,
+        notes_column=notes_column,
+    )

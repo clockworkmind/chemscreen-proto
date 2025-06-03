@@ -15,6 +15,10 @@ import pandas as pd
 # Add the chemscreen package to the path
 sys.path.append(str(Path(__file__).parent))
 
+# Import our modules
+from chemscreen.processor import process_csv_data, merge_duplicates
+from chemscreen.models import CSVColumnMapping
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -304,11 +308,27 @@ def show_upload_page():
             "Choose a CSV file",
             type=["csv"],
             help="Upload a CSV file with chemical names and/or CAS numbers",
+            accept_multiple_files=False,
+            key="csv_uploader",
         )
 
         if uploaded_file is not None:
             try:
+                # Check file size (10MB limit)
+                file_size = uploaded_file.size
+                if file_size > 10 * 1024 * 1024:  # 10MB in bytes
+                    st.error(
+                        f"❌ File too large ({file_size / 1024 / 1024:.1f}MB). Maximum size is 10MB."
+                    )
+                    return
+
+                # Read CSV file
                 df = pd.read_csv(uploaded_file)
+
+                # Check if empty
+                if df.empty:
+                    st.error("❌ The uploaded CSV file is empty.")
+                    return
 
                 st.success(f"✅ File uploaded successfully! Found {len(df)} rows.")
 
@@ -320,27 +340,158 @@ def show_upload_page():
                 st.subheader("Column Mapping")
                 col_names = df.columns.tolist()
 
-                _name_col = st.selectbox(
+                name_col = st.selectbox(
                     "Select Chemical Name Column",
                     options=["None"] + col_names,
                     help="Column containing chemical names",
+                    key="name_column_select",
                 )
 
-                _cas_col = st.selectbox(
+                cas_col = st.selectbox(
                     "Select CAS Number Column",
                     options=["None"] + col_names,
                     help="Column containing CAS Registry Numbers",
+                    key="cas_column_select",
                 )
 
-                # TODO: Use name_col and cas_col for processing
+                # Validate that at least one column is selected
+                if name_col == "None" and cas_col == "None":
+                    st.warning(
+                        "⚠️ Please select at least one column (Chemical Name or CAS Number)"
+                    )
+                else:
+                    # Show selected column preview
+                    with st.expander("View Selected Columns", expanded=True):
+                        preview_cols = []
+                        if name_col != "None":
+                            preview_cols.append(name_col)
+                        if cas_col != "None":
+                            preview_cols.append(cas_col)
+                        st.dataframe(
+                            df[preview_cols].head(10), use_container_width=True
+                        )
 
-                if st.button("Process Chemicals", type="primary"):
-                    with st.spinner("Processing chemical list..."):
-                        # TODO: Implement chemical processing using _name_col and _cas_col
-                        st.success("✅ Chemicals processed successfully!")
-                        st.session_state.chemicals = df.to_dict("records")
-                        st.balloons()
+                    if st.button("Process Chemicals", type="primary"):
+                        with st.spinner("Processing chemical list..."):
+                            # Create column mapping
+                            column_mapping = CSVColumnMapping(
+                                name_column=name_col if name_col != "None" else None,
+                                cas_column=cas_col if cas_col != "None" else None,
+                            )
 
+                            # Process CSV data
+                            try:
+                                result = process_csv_data(df, column_mapping)
+
+                                # Store validated chemicals
+                                st.session_state.chemicals = result.valid_chemicals
+
+                                # Display results
+                                col1, col2, col3 = st.columns(3)
+                                with col1:
+                                    st.metric("Total Rows", result.total_rows)
+                                with col2:
+                                    st.metric(
+                                        "Valid Chemicals", len(result.valid_chemicals)
+                                    )
+                                with col3:
+                                    st.metric(
+                                        "Success Rate", f"{result.success_rate:.1f}%"
+                                    )
+
+                                # Show warnings if any
+                                if result.warnings:
+                                    with st.expander(
+                                        f"⚠️ Warnings ({len(result.warnings)})",
+                                        expanded=False,
+                                    ):
+                                        for warning in result.warnings:
+                                            st.warning(warning)
+
+                                # Show errors if any
+                                if result.invalid_rows:
+                                    with st.expander(
+                                        f"❌ Invalid Rows ({len(result.invalid_rows)})",
+                                        expanded=True,
+                                    ):
+                                        for error in result.invalid_rows:
+                                            st.error(
+                                                f"Row {error['row_number']}: {error['errors']}"
+                                            )
+
+                                # Check for duplicates and offer to merge
+                                if result.valid_chemicals:
+                                    from chemscreen.processor import detect_duplicates
+
+                                    duplicates = detect_duplicates(
+                                        result.valid_chemicals
+                                    )
+                                    if duplicates:
+                                        st.warning(
+                                            f"Found {len(duplicates)} duplicate chemicals."
+                                        )
+                                        if st.checkbox("Merge duplicates?", value=True):
+                                            result.valid_chemicals = merge_duplicates(
+                                                result.valid_chemicals
+                                            )
+                                            st.session_state.chemicals = (
+                                                result.valid_chemicals
+                                            )
+                                            st.info(
+                                                f"Merged to {len(result.valid_chemicals)} unique chemicals."
+                                            )
+
+                                if result.valid_chemicals:
+                                    st.success(
+                                        f"✅ Successfully processed {len(result.valid_chemicals)} chemicals!"
+                                    )
+
+                                    # Show preview of processed chemicals
+                                    with st.expander(
+                                        "Preview Processed Chemicals", expanded=True
+                                    ):
+                                        preview_data = []
+                                        for chem in result.valid_chemicals[
+                                            :10
+                                        ]:  # Show first 10
+                                            preview_data.append(
+                                                {
+                                                    "Name": chem.name,
+                                                    "CAS Number": chem.cas_number
+                                                    or "N/A",
+                                                    "Validated": "✅"
+                                                    if chem.validated
+                                                    else "⚠️",
+                                                    "Synonyms": ", ".join(chem.synonyms)
+                                                    if chem.synonyms
+                                                    else "N/A",
+                                                }
+                                            )
+                                        preview_df = pd.DataFrame(preview_data)
+                                        st.dataframe(
+                                            preview_df, use_container_width=True
+                                        )
+
+                                        if len(result.valid_chemicals) > 10:
+                                            st.info(
+                                                f"Showing first 10 of {len(result.valid_chemicals)} chemicals"
+                                            )
+
+                                    st.balloons()
+                                else:
+                                    st.error(
+                                        "No valid chemicals found in the uploaded file."
+                                    )
+
+                            except Exception as e:
+                                st.error(f"Error processing CSV: {str(e)}")
+                                logger.error(
+                                    f"CSV processing error: {e}", exc_info=True
+                                )
+
+            except pd.errors.EmptyDataError:
+                st.error("❌ The uploaded file appears to be empty or invalid.")
+                logger.error("Empty CSV file uploaded")
             except Exception as e:
                 st.error(f"❌ Error reading file: {str(e)}")
                 logger.error(f"File upload error: {str(e)}")
@@ -369,8 +520,67 @@ def show_upload_page():
         # Demo data button
         if st.button("Load Demo Data"):
             st.info("Loading demo dataset...")
-            # TODO: Load demo data
-            st.success("Demo data loaded!")
+            try:
+                # Create demo data
+                demo_data = pd.DataFrame(
+                    {
+                        "Chemical Name": [
+                            "TCE",
+                            "Dichloromethane",
+                            "Benzene",
+                            "Formaldehyde",
+                            "Acetone",
+                            "Methanol",
+                            "Toluene",
+                            "Xylene",
+                            "Styrene",
+                            "Vinyl chloride",
+                        ],
+                        "CAS Number": [
+                            "79-01-6",
+                            "75-09-2",
+                            "71-43-2",
+                            "50-00-0",
+                            "67-64-1",
+                            "67-56-1",
+                            "108-88-3",
+                            "1330-20-7",
+                            "100-42-5",
+                            "75-01-4",
+                        ],
+                        "Notes": [
+                            "Common solvent",
+                            "Methylene chloride",
+                            "Carcinogenic",
+                            "Preservative",
+                            "Common solvent",
+                            "Wood alcohol",
+                            "Paint thinner",
+                            "Mixed isomers",
+                            "Plastic monomer",
+                            "PVC precursor",
+                        ],
+                    }
+                )
+
+                # Process demo data
+                column_mapping = CSVColumnMapping(
+                    name_column="Chemical Name",
+                    cas_column="CAS Number",
+                    notes_column="Notes",
+                )
+
+                result = process_csv_data(demo_data, column_mapping)
+                st.session_state.chemicals = result.valid_chemicals
+
+                st.success(
+                    f"Demo data loaded! {len(result.valid_chemicals)} chemicals ready for search."
+                )
+                st.experimental_rerun()
+
+            except Exception as e:
+                st.error(f"Error loading demo data: {str(e)}")
+                logger.error(f"Demo data error: {e}", exc_info=True)
 
 
 def show_search_page():
