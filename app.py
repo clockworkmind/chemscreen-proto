@@ -223,11 +223,130 @@ def setup_sidebar():
 
         st.markdown("---")
 
+        # Demo Data Quick Access
+        st.subheader("📊 Demo Data")
+        demo_col1, demo_col2 = st.columns(2)
+
+        with demo_col1:
+            if st.button(
+                "Small (10)",
+                help="Load 10 demo chemicals",
+                use_container_width=True,
+                key="sidebar_small",
+            ):
+                load_demo_data("small")
+
+        with demo_col2:
+            if st.button(
+                "Medium (50)",
+                help="Load 50 demo chemicals",
+                use_container_width=True,
+                key="sidebar_medium",
+            ):
+                load_demo_data("medium")
+
+        if st.button(
+            "Large (150)",
+            help="Load 150 demo chemicals with edge cases",
+            use_container_width=True,
+            key="sidebar_large",
+        ):
+            load_demo_data("large")
+
+        st.markdown("---")
+
         # Footer
         st.caption("ChemScreen Prototype v1.0")
         st.caption("© 2025 - For Research Use Only")
 
         return page
+
+
+def load_demo_data(size: str):
+    """Load demo dataset into session state.
+
+    Args:
+        size: One of 'small', 'medium', or 'large'
+    """
+    try:
+        # Map size to filename
+        size_map = {
+            "small": "demo_small.csv",
+            "medium": "demo_medium.csv",
+            "large": "demo_large.csv",
+        }
+
+        if size not in size_map:
+            st.error(f"Invalid demo size: {size}")
+            return
+
+        # Load the demo file
+        demo_file_path = Path(__file__).parent / "data" / "raw" / size_map[size]
+
+        if not demo_file_path.exists():
+            st.error(f"Demo file not found: {demo_file_path}")
+            logger.error(f"Demo file not found: {demo_file_path}")
+            return
+
+        # Read the CSV file
+        demo_data = pd.read_csv(demo_file_path)
+
+        if demo_data.empty:
+            st.error("Demo data file is empty")
+            return
+
+        # Create column mapping for demo data
+        column_mapping = CSVColumnMapping(
+            name_column="chemical_name",
+            cas_column="cas_number",
+            synonyms_column="synonyms",
+            notes_column="notes",
+        )
+
+        # Process the demo data
+        with st.spinner(f"Loading {size} demo dataset..."):
+            result = process_csv_data(demo_data, column_mapping)
+
+            if result.valid_chemicals:
+                st.session_state.chemicals = result.valid_chemicals
+
+                # Show success message with stats
+                st.success(
+                    f"✅ {size.title()} demo dataset loaded! "
+                    f"{len(result.valid_chemicals)} chemicals ready for search."
+                )
+
+                # Show any warnings from processing
+                if result.warnings:
+                    with st.expander(
+                        f"⚠️ Processing Warnings ({len(result.warnings)})",
+                        expanded=False,
+                    ):
+                        for warning in result.warnings:
+                            st.warning(warning)
+
+                # Show invalid rows if any (expected for large dataset with edge cases)
+                if result.invalid_rows:
+                    with st.expander(
+                        f"❌ Invalid Rows ({len(result.invalid_rows)})", expanded=False
+                    ):
+                        st.info("These are intentional edge cases in the demo data:")
+                        for error in result.invalid_rows:
+                            st.error(f"Row {error['row_number']}: {error['errors']}")
+
+                # Automatically navigate to search page after loading
+                if st.button("▶️ Go to Search", type="primary"):
+                    st.rerun()
+
+            else:
+                st.error("No valid chemicals found in demo data")
+
+    except FileNotFoundError:
+        st.error(f"Demo file not found for size: {size}")
+        logger.error(f"Demo file not found for size: {size}")
+    except Exception as e:
+        st.error(f"Error loading demo data: {str(e)}")
+        logger.error(f"Demo data loading error: {e}", exc_info=True)
 
 
 # Page components
@@ -636,70 +755,31 @@ def show_upload_page():
         - Include headers in your CSV
         """)
 
-        # Demo data button
-        if st.button("Load Demo Data"):
-            st.info("Loading demo dataset...")
-            try:
-                # Create demo data
-                demo_data = pd.DataFrame(
-                    {
-                        "Chemical Name": [
-                            "TCE",
-                            "Dichloromethane",
-                            "Benzene",
-                            "Formaldehyde",
-                            "Acetone",
-                            "Methanol",
-                            "Toluene",
-                            "Xylene",
-                            "Styrene",
-                            "Vinyl chloride",
-                        ],
-                        "CAS Number": [
-                            "79-01-6",
-                            "75-09-2",
-                            "71-43-2",
-                            "50-00-0",
-                            "67-64-1",
-                            "67-56-1",
-                            "108-88-3",
-                            "1330-20-7",
-                            "100-42-5",
-                            "75-01-4",
-                        ],
-                        "Notes": [
-                            "Common solvent",
-                            "Methylene chloride",
-                            "Carcinogenic",
-                            "Preservative",
-                            "Common solvent",
-                            "Wood alcohol",
-                            "Paint thinner",
-                            "Mixed isomers",
-                            "Plastic monomer",
-                            "PVC precursor",
-                        ],
-                    }
-                )
+        # Demo data section
+        st.markdown("### 📊 Demo Data")
+        st.caption("Load sample datasets for testing")
 
-                # Process demo data
-                column_mapping = CSVColumnMapping(
-                    name_column="Chemical Name",
-                    cas_column="CAS Number",
-                    notes_column="Notes",
-                )
+        col1, col2, col3 = st.columns(3)
 
-                result = process_csv_data(demo_data, column_mapping)
-                st.session_state.chemicals = result.valid_chemicals
+        with col1:
+            if st.button(
+                "Small\n(10)", help="Load 10 demo chemicals", use_container_width=True
+            ):
+                load_demo_data("small")
 
-                st.success(
-                    f"Demo data loaded! {len(result.valid_chemicals)} chemicals ready for search."
-                )
-                st.experimental_rerun()
+        with col2:
+            if st.button(
+                "Medium\n(50)", help="Load 50 demo chemicals", use_container_width=True
+            ):
+                load_demo_data("medium")
 
-            except Exception as e:
-                st.error(f"Error loading demo data: {str(e)}")
-                logger.error(f"Demo data error: {e}", exc_info=True)
+        with col3:
+            if st.button(
+                "Large\n(150)",
+                help="Load 150 demo chemicals with edge cases",
+                use_container_width=True,
+            ):
+                load_demo_data("large")
 
 
 def show_search_page():

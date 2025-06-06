@@ -1,0 +1,54 @@
+chemical_name,cas_number,synonyms,notes
+Trichloroethylene,79-01-6,"TCE;Trichloroethene",Common degreasing solvent
+Dichloromethane,75-09-2,"DCM;Methylene chloride",Paint stripper component
+Benzene,71-43-2,"Benzol;Cyclohexatriene",Known human carcinogen
+Formaldehyde,50-00-0,"Methanal;Methyl aldehyde",Preservative and disinfectant
+Acetone,67-64-1,"Propanone;Dimethyl ketone",Common laboratory solvent
+Methanol,67-56-1,"Methyl alcohol;Wood alcohol",Fuel additive and solvent
+Toluene,108-88-3,"Methylbenzene;Phenylmethane",Paint thinner and adhesive
+Xylene,1330-20-7,"Dimethylbenzene;Xylol",Mixed isomers solvent
+Styrene,100-42-5,"Vinylbenzene;Phenylethene",Plastic monomer
+Vinyl chloride,75-01-4,"Chloroethene;VCM",PVC precursor
+Ethylene glycol,107-21-1,"1,2-Ethanediol;Glycol",Antifreeze component
+Propylene glycol,57-55-6,"1,2-Propanediol;Propane-1,2-diol",Food additive
+Butadiene,106-99-0,"1,3-Butadiene;Biethylene",Rubber production
+Acrylonitrile,107-13-1,"Vinyl cyanide;Cyanoethylene",Plastic fiber production
+Ethylene oxide,75-21-8,"Oxirane;Epoxyethane",Sterilizing agent
+Propylene oxide,75-56-9,"1,2-Epoxypropane;Methyloxirane",Chemical intermediate
+Chloroform,67-66-3,"Trichloromethane;Methyl trichloride",Former anesthetic
+Carbon tetrachloride,56-23-5,"Tetrachloromethane;Perchloromethane",Former solvent
+Tetrachloroethylene,127-18-4,"Perchloroethylene;PCE;PERC",Dry cleaning solvent
+1,1,1-Trichloroethane,71-55-6,"Methyl chloroform;TCA",Former degreaser
+1,1,2-Trichloroethane,79-00-5,"Vinyl trichloride",Chemical intermediate
+1,2-Dichloroethane,107-06-2,"Ethylene dichloride;EDC",PVC production
+1,1-Dichloroethylene,75-35-4,"Vinylidene chloride;VDC",Plastic wrap
+1,2-Dichloroethylene,540-59-0,"Acetylene dichloride",Industrial solvent
+cis-1,2-Dichloroethylene,156-59-2,"cis-DCE;cis-1,2-DCE",Groundwater contaminant
+trans-1,2-Dichloroethylene,156-60-5,"trans-DCE;trans-1,2-DCE",Groundwater contaminant
+Chlorobenzene,108-90-7,"Monochlorobenzene;MCB",Solvent and intermediate
+1,2-Dichlorobenzene,95-50-1,"o-Dichlorobenzene;ODCB",Solvent and fumigant
+1,3-Dichlorobenzene,541-73-1,"m-Dichlorobenzene;MDCB",Chemical intermediate
+1,4-Dichlorobenzene,106-46-7,"p-Dichlorobenzene;PDCB",Moth repellent
+1,2,4-Trichlorobenzene,120-82-1,"1,2,4-TCB",Solvent and intermediate
+Hexachlorobenzene,118-74-1,"HCB;Perchlorobenzene",Former fungicide
+Pentachlorophenol,87-86-5,"PCP;Penta",Wood preservative
+2,4-Dichlorophenol,120-83-2,"DCP",Herbicide intermediate
+2,4,6-Trichlorophenol,88-06-2,"TCP",Antiseptic and fungicide
+Phenol,108-95-2,"Carbolic acid;Hydroxybenzene",Disinfectant and plastic
+Bisphenol A,80-05-7,"BPA;4,4'-Dihydroxydiphenylpropane",Plastic hardener
+Aniline,62-53-3,"Aminobenzene;Phenylamine",Dye production
+Nitrobenzene,98-95-3,"Oil of mirbane",Solvent and aniline precursor
+2,4-Dinitrotoluene,121-14-2,"2,4-DNT",Explosive production
+2,6-Dinitrotoluene,606-20-2,"2,6-DNT",Chemical intermediate
+Naphthalene,91-20-3,"Tar camphor;White tar",Mothball ingredient
+Anthracene,120-12-7,"Paranaphthalene",Coal tar component
+Pyrene,129-00-0,"Benzo[def]phenanthrene",PAH compound
+Benzo[a]pyrene,50-32-8,"BaP;3,4-Benzopyrene",Carcinogenic PAH
+Dibenzo[a,h]anthracene,53-70-3,"DBA",Carcinogenic PAH
+Acenaphthene,83-32-9,"1,2-Dihydroacenaphthylene",Coal tar component
+Fluorene,86-73-7,"9H-Fluorene",Coal tar component
+Phenanthrene,85-01-8,"Phenanthrin",Coal tar PAH
+Fluoranthene,206-44-0,"Benzo[jk]fluorene",Environmental PAH
+Chrysene,218-01-9,"1,2-Benzophenanthrene",Carcinogenic PAH
+Benzo[b]fluoranthene,205-99-2,"B[b]F;3,4-Benzofluoranthene",Carcinogenic PAH
+Benzo[k]fluoranthene,207-08-9,"B[k]F;11,12-Benzofluoranthene",Carcinogenic PAH
