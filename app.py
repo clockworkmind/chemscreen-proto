@@ -16,8 +16,13 @@ import pandas as pd
 sys.path.append(str(Path(__file__).parent))
 
 # Import our modules
-from chemscreen.processor import process_csv_data, merge_duplicates
+from chemscreen.processor import merge_duplicates
 from chemscreen.models import CSVColumnMapping
+from chemscreen.cached_processors import (
+    cached_process_csv_data,
+    cached_suggest_column_mapping,
+)
+from chemscreen.optimized_processor import optimized_detect_duplicates
 
 # Configure logging
 logging.basicConfig(
@@ -56,6 +61,7 @@ def init_session_state():
             "max_results_per_chemical": 100,
             "include_reviews": True,
             "cache_enabled": True,
+            "max_batch_size": 200,
         }
 
 
@@ -268,6 +274,8 @@ def load_demo_data(size: str):
     Args:
         size: One of 'small', 'medium', or 'large'
     """
+    import time
+
     try:
         # Map size to filename
         size_map = {
@@ -303,9 +311,23 @@ def load_demo_data(size: str):
             notes_column="notes",
         )
 
-        # Process the demo data
-        with st.spinner(f"Loading {size} demo dataset..."):
-            result = process_csv_data(demo_data, column_mapping)
+        # Process the demo data with progress indicator
+        progress_container = st.container()
+        with progress_container:
+            progress_bar = st.progress(0)
+            status_text = st.empty()
+
+            status_text.text(f"📂 Loading {size} demo dataset...")
+            progress_bar.progress(0.2)
+
+            result = cached_process_csv_data(demo_data, column_mapping)
+
+            progress_bar.progress(0.8)
+            status_text.text("✨ Finalizing demo data...")
+
+            progress_bar.progress(1.0)
+            time.sleep(0.3)
+            progress_container.empty()
 
             if result.valid_chemicals:
                 st.session_state.chemicals = result.valid_chemicals
@@ -449,19 +471,99 @@ def show_upload_page():
                     st.error("❌ The uploaded CSV file is empty.")
                     return
 
+                # Check batch size limits
+                MAX_BATCH_SIZE = 200  # As per requirements
+                if len(df) > MAX_BATCH_SIZE:
+                    st.error(
+                        f"❌ Dataset too large: {len(df)} rows found, but the maximum allowed is {MAX_BATCH_SIZE} chemicals.\n\n"
+                        f"**Options:**\n"
+                        f"- Split your CSV into smaller batches (max {MAX_BATCH_SIZE} chemicals each)\n"
+                        f"- Use the first {MAX_BATCH_SIZE} rows only (you can do this after column mapping)\n"
+                        f"- Contact support for enterprise batch processing needs"
+                    )
+
+                    # Offer to truncate
+                    if st.checkbox(
+                        f"Process only the first {MAX_BATCH_SIZE} chemicals?",
+                        key="truncate_large_file",
+                    ):
+                        df = df.head(MAX_BATCH_SIZE)
+                        st.warning(
+                            f"⚠️ Dataset truncated to {MAX_BATCH_SIZE} chemicals for processing."
+                        )
+                    else:
+                        return
+
                 st.success(f"✅ File uploaded successfully! Found {len(df)} rows.")
 
                 # Display preview
                 st.subheader("Data Preview")
 
-                # Check if dataframe is large
-                if len(df) > 100:
+                # Pagination for large datasets
+                ROWS_PER_PAGE = 100
+                total_rows = len(df)
+
+                if total_rows > ROWS_PER_PAGE:
                     st.info(
-                        f"📊 Large dataset detected: {len(df)} rows. Showing first 100 rows in preview."
+                        f"📊 Large dataset detected: {total_rows:,} rows. Using pagination for better performance."
                     )
-                    preview_df = df.head(100)
+
+                    # Calculate total pages
+                    total_pages = (total_rows + ROWS_PER_PAGE - 1) // ROWS_PER_PAGE
+
+                    # Page selector
+                    col1, col2, col3 = st.columns([1, 2, 1])
+                    with col2:
+                        page_num = st.selectbox(
+                            "Page",
+                            options=list(range(1, total_pages + 1)),
+                            format_func=lambda x: f"Page {x} of {total_pages} (rows {(x - 1) * ROWS_PER_PAGE + 1}-{min(x * ROWS_PER_PAGE, total_rows)})",
+                            key="preview_page_selector",
+                        )
+
+                    # Calculate row indices for current page
+                    start_idx = (page_num - 1) * ROWS_PER_PAGE
+                    end_idx = min(start_idx + ROWS_PER_PAGE, total_rows)
+                    preview_df = df.iloc[start_idx:end_idx]
+
+                    # Navigation buttons
+                    nav_col1, nav_col2, nav_col3, nav_col4, nav_col5 = st.columns(
+                        [1, 1, 2, 1, 1]
+                    )
+                    with nav_col1:
+                        if st.button(
+                            "⏮️ First", disabled=page_num == 1, use_container_width=True
+                        ):
+                            st.rerun()
+                    with nav_col2:
+                        if st.button(
+                            "◀️ Previous",
+                            disabled=page_num == 1,
+                            use_container_width=True,
+                        ):
+                            st.rerun()
+                    with nav_col3:
+                        st.markdown(
+                            f"<center>Showing rows {start_idx + 1:,} - {end_idx:,} of {total_rows:,}</center>",
+                            unsafe_allow_html=True,
+                        )
+                    with nav_col4:
+                        if st.button(
+                            "Next ▶️",
+                            disabled=page_num == total_pages,
+                            use_container_width=True,
+                        ):
+                            st.rerun()
+                    with nav_col5:
+                        if st.button(
+                            "Last ⏭️",
+                            disabled=page_num == total_pages,
+                            use_container_width=True,
+                        ):
+                            st.rerun()
                 else:
                     preview_df = df
+                    st.info(f"Showing all {total_rows} rows")
 
                 # Display with virtual scrolling for performance
                 st.dataframe(
@@ -475,9 +577,7 @@ def show_upload_page():
                 st.subheader("Column Mapping")
 
                 # Auto-detect columns
-                from chemscreen.processor import suggest_column_mapping
-
-                suggested_mapping = suggest_column_mapping(df)
+                suggested_mapping = cached_suggest_column_mapping(df)
 
                 col_names = df.columns.tolist()
 
@@ -547,19 +647,52 @@ def show_upload_page():
                         )
 
                     if st.button("Process Chemicals", type="primary"):
-                        with st.spinner("Processing chemical list..."):
+                        # Create progress indicators
+                        progress_container = st.container()
+                        with progress_container:
+                            progress_bar = st.progress(0)
+                            status_text = st.empty()
+
                             # Create column mapping
                             column_mapping = CSVColumnMapping(
                                 name_column=name_col if name_col != "None" else None,
                                 cas_column=cas_col if cas_col != "None" else None,
                             )
 
-                            # Process CSV data
+                            # Process CSV data with progress updates
                             try:
-                                result = process_csv_data(df, column_mapping)
+                                status_text.text("📋 Validating data structure...")
+                                progress_bar.progress(0.1)
+
+                                # Initial validation and batch size check
+                                MAX_BATCH_SIZE = 200
+                                if len(df) > MAX_BATCH_SIZE:
+                                    st.error(
+                                        f"❌ Cannot process more than {MAX_BATCH_SIZE} chemicals at once."
+                                    )
+                                    progress_container.empty()
+                                    return
+
+                                status_text.text("🔍 Processing chemicals...")
+                                progress_bar.progress(0.3)
+
+                                result = cached_process_csv_data(df, column_mapping)
+
+                                status_text.text("✨ Finalizing results...")
+                                progress_bar.progress(0.9)
 
                                 # Store validated chemicals
                                 st.session_state.chemicals = result.valid_chemicals
+
+                                # Complete progress
+                                progress_bar.progress(1.0)
+                                status_text.text("✅ Processing complete!")
+
+                                # Clear progress indicators after a short delay
+                                import time
+
+                                time.sleep(0.5)
+                                progress_container.empty()
 
                                 # Display comprehensive results
                                 st.subheader("📊 Processing Summary")
@@ -612,9 +745,7 @@ def show_upload_page():
 
                                 # Check for duplicates and offer to merge
                                 if result.valid_chemicals:
-                                    from chemscreen.processor import detect_duplicates
-
-                                    duplicates = detect_duplicates(
+                                    duplicates = optimized_detect_duplicates(
                                         result.valid_chemicals
                                     )
                                     if duplicates:
@@ -642,11 +773,7 @@ def show_upload_page():
                                         "Preview Processed Chemicals", expanded=True
                                     ):
                                         # Get duplicates for highlighting
-                                        from chemscreen.processor import (
-                                            detect_duplicates,
-                                        )
-
-                                        duplicates_list = detect_duplicates(
+                                        duplicates_list = optimized_detect_duplicates(
                                             result.valid_chemicals
                                         )
                                         duplicate_indices = set()
@@ -654,14 +781,59 @@ def show_upload_page():
                                             duplicate_indices.add(dup1)
                                             duplicate_indices.add(dup2)
 
+                                        # Pagination for processed chemicals
+                                        PROCESSED_ROWS_PER_PAGE = 50
+                                        total_processed = len(result.valid_chemicals)
+
+                                        if total_processed > PROCESSED_ROWS_PER_PAGE:
+                                            # Calculate total pages
+                                            total_processed_pages = (
+                                                total_processed
+                                                + PROCESSED_ROWS_PER_PAGE
+                                                - 1
+                                            ) // PROCESSED_ROWS_PER_PAGE
+
+                                            # Page selector for processed chemicals
+                                            proc_col1, proc_col2, proc_col3 = (
+                                                st.columns([1, 2, 1])
+                                            )
+                                            with proc_col2:
+                                                processed_page_num = st.selectbox(
+                                                    "Page",
+                                                    options=list(
+                                                        range(
+                                                            1, total_processed_pages + 1
+                                                        )
+                                                    ),
+                                                    format_func=lambda x: f"Page {x} of {total_processed_pages} (chemicals {(x - 1) * PROCESSED_ROWS_PER_PAGE + 1}-{min(x * PROCESSED_ROWS_PER_PAGE, total_processed)})",
+                                                    key="processed_page_selector",
+                                                )
+
+                                            # Calculate indices for current page
+                                            proc_start_idx = (
+                                                processed_page_num - 1
+                                            ) * PROCESSED_ROWS_PER_PAGE
+                                            proc_end_idx = min(
+                                                proc_start_idx
+                                                + PROCESSED_ROWS_PER_PAGE,
+                                                total_processed,
+                                            )
+                                            chemicals_to_show = result.valid_chemicals[
+                                                proc_start_idx:proc_end_idx
+                                            ]
+                                        else:
+                                            chemicals_to_show = result.valid_chemicals
+                                            proc_start_idx = 0
+
                                         preview_data = []
-                                        for idx, chem in enumerate(
-                                            result.valid_chemicals[:50]
-                                        ):  # Show up to 50
-                                            is_duplicate = idx in duplicate_indices
+                                        for idx, chem in enumerate(chemicals_to_show):
+                                            actual_idx = proc_start_idx + idx
+                                            is_duplicate = (
+                                                actual_idx in duplicate_indices
+                                            )
                                             preview_data.append(
                                                 {
-                                                    "Index": idx + 1,
+                                                    "Index": actual_idx + 1,
                                                     "Name": chem.name,
                                                     "CAS Number": chem.cas_number
                                                     or "N/A",
@@ -710,9 +882,9 @@ def show_upload_page():
                                             },
                                         )
 
-                                        if len(result.valid_chemicals) > 50:
+                                        if total_processed > PROCESSED_ROWS_PER_PAGE:
                                             st.info(
-                                                f"Showing first 50 of {len(result.valid_chemicals)} chemicals"
+                                                f"Showing chemicals {proc_start_idx + 1}-{proc_end_idx} of {total_processed}"
                                             )
 
                                     st.balloons()
@@ -829,11 +1001,17 @@ def show_search_page():
 
     with col2:
         st.subheader("Batch Information")
-        st.info(f"**Chemicals to search**: {len(st.session_state.chemicals)}")
+        chemical_count = len(st.session_state.chemicals)
+        MAX_BATCH_SIZE = 200
+
+        if chemical_count > MAX_BATCH_SIZE:
+            st.error(f"❌ Too many chemicals: {chemical_count} (max: {MAX_BATCH_SIZE})")
+        else:
+            st.info(f"**Chemicals to search**: {chemical_count}")
 
         # Estimate time
         estimated_time = (
-            len(st.session_state.chemicals) * 0.5
+            min(chemical_count, MAX_BATCH_SIZE) * 0.5
         )  # 0.5 minutes per chemical
         st.info(f"**Estimated time**: {estimated_time:.1f} minutes")
 
