@@ -1,0 +1,157 @@
+chemical_name,cas_number,synonyms,notes
+Trichloroethylene,79-01-6,"TCE;Trichloroethene",Common degreasing solvent
+Dichloromethane,75-09-2,"DCM;Methylene chloride",Paint stripper component
+Benzene,71-43-2,"Benzol;Cyclohexatriene",Known human carcinogen
+Formaldehyde,50-00-0,"Methanal;Methyl aldehyde",Preservative and disinfectant
+Acetone,67-64-1,"Propanone;Dimethyl ketone",Common laboratory solvent
+Methanol,67-56-1,"Methyl alcohol;Wood alcohol",Fuel additive and solvent
+Toluene,108-88-3,"Methylbenzene;Phenylmethane",Paint thinner and adhesive
+Xylene,1330-20-7,"Dimethylbenzene;Xylol",Mixed isomers solvent
+Styrene,100-42-5,"Vinylbenzene;Phenylethene",Plastic monomer
+Vinyl chloride,75-01-4,"Chloroethene;VCM",PVC precursor
+Ethylene glycol,107-21-1,"Ethanediol;Glycol",Antifreeze component
+Propylene glycol,57-55-6,"Propanediol",Food additive
+Butadiene,106-99-0,"Biethylene",Rubber production
+Acrylonitrile,107-13-1,"Vinyl cyanide;Cyanoethylene",Plastic fiber production
+Ethylene oxide,75-21-8,"Oxirane;Epoxyethane",Sterilizing agent
+Propylene oxide,75-56-9,"Epoxypropane",Chemical intermediate
+Chloroform,67-66-3,"Trichloromethane",Former anesthetic
+Carbon tetrachloride,56-23-5,"Tetrachloromethane",Former solvent
+Tetrachloroethylene,127-18-4,"Perchloroethylene;PCE",Dry cleaning solvent
+"1,1,1-Trichloroethane",71-55-6,"Methyl chloroform",Former degreaser
+"1,1,2-Trichloroethane",79-00-5,"Vinyl trichloride",Chemical intermediate
+"1,2-Dichloroethane",107-06-2,"Ethylene dichloride",PVC production
+"1,1-Dichloroethylene",75-35-4,"Vinylidene chloride",Plastic wrap
+"1,2-Dichloroethylene",540-59-0,"Acetylene dichloride",Industrial solvent
+"cis-1,2-Dichloroethylene",156-59-2,"cis-DCE",Groundwater contaminant
+"trans-1,2-Dichloroethylene",156-60-5,"trans-DCE",Groundwater contaminant
+Chlorobenzene,108-90-7,"Monochlorobenzene",Solvent and intermediate
+"1,2-Dichlorobenzene",95-50-1,"o-Dichlorobenzene",Solvent and fumigant
+"1,3-Dichlorobenzene",541-73-1,"m-Dichlorobenzene",Chemical intermediate
+"1,4-Dichlorobenzene",106-46-7,"p-Dichlorobenzene",Moth repellent
+"1,2,4-Trichlorobenzene",120-82-1,"TCB",Solvent and intermediate
+Hexachlorobenzene,118-74-1,"HCB;Perchlorobenzene",Former fungicide
+Pentachlorophenol,87-86-5,"PCP;Penta",Wood preservative
+"2,4-Dichlorophenol",120-83-2,"DCP",Herbicide intermediate
+"2,4,6-Trichlorophenol",88-06-2,"TCP",Antiseptic and fungicide
+Phenol,108-95-2,"Carbolic acid",Disinfectant and plastic
+Bisphenol A,80-05-7,"BPA",Plastic hardener
+Aniline,62-53-3,"Aminobenzene",Dye production
+Nitrobenzene,98-95-3,"Oil of mirbane",Solvent and aniline precursor
+"2,4-Dinitrotoluene",121-14-2,"DNT",Explosive production
+"2,6-Dinitrotoluene",606-20-2,"DNT",Chemical intermediate
+Naphthalene,91-20-3,"Tar camphor",Mothball ingredient
+Anthracene,120-12-7,"Paranaphthalene",Coal tar component
+Pyrene,129-00-0,"Benzophenanthrene",PAH compound
+Benzo[a]pyrene,50-32-8,"BaP",Carcinogenic PAH
+"Dibenzo[a,h]anthracene",53-70-3,"DBA",Carcinogenic PAH
+Acenaphthene,83-32-9,"Dihydroacenaphthylene",Coal tar component
+Fluorene,86-73-7,"H-Fluorene",Coal tar component
+Phenanthrene,85-01-8,"Phenanthrin",Coal tar PAH
+Fluoranthene,206-44-0,"Benzofluorene",Environmental PAH
+Chrysene,218-01-9,"Benzophenanthrene",Carcinogenic PAH
+Benzo[b]fluoranthene,205-99-2,"BbF",Carcinogenic PAH
+Benzo[k]fluoranthene,207-08-9,"BkF",Carcinogenic PAH
+"Methyl tert-butyl ether",1634-04-4,"MTBE",Gasoline additive
+Diethyl ether,60-29-7,"Ethyl ether",Laboratory solvent
+Tetrahydrofuran,109-99-9,"THF;Oxolane",Solvent and plastic
+"1,4-Dioxane",123-91-1,"Diethylene oxide",Solvent and stabilizer
+Ethyl acetate,141-78-6,"Acetic acid ethyl ester",Solvent and flavoring
+Butyl acetate,123-86-4,"n-Butyl acetate",Paint solvent
+"Methyl ethyl ketone",78-93-3,"MEK;Butanone",Industrial solvent
+"Methyl isobutyl ketone",108-10-1,"MIBK;Methyl-pentanone",Solvent and extractant
+Cyclohexanone,108-94-1,"Pimelic ketone",Nylon precursor
+Isopropanol,67-63-0,"IPA;Propanol",Rubbing alcohol
+n-Butanol,71-36-3,"Butanol;Butyl alcohol",Solvent and intermediate
+Ethanol,64-17-5,"Ethyl alcohol;Grain alcohol",Alcoholic beverages
+Glycerol,56-81-5,"Glycerin;Propanetriol",Humectant and solvent
+"Diethylene glycol",111-46-6,"DEG;Oxydiethanol",Antifreeze and solvent
+"Triethylene glycol",112-27-6,"TEG",Dehydrating agent
+"Polyethylene glycol 400",25322-68-3,"PEG 400",Pharmaceutical excipient
+"Dimethyl sulfoxide",67-68-5,"DMSO",Aprotic solvent
+"N,N-Dimethylformamide",68-12-2,"DMF",Polar aprotic solvent
+"N,N-Dimethylacetamide",127-19-5,"DMAc",Polar aprotic solvent
+"N-Methyl-2-pyrrolidone",872-50-4,"NMP;Methyl-pyrrolidone",Polar aprotic solvent
+Acetic acid,64-19-7,"Ethanoic acid",Food preservative
+Formic acid,64-18-6,"Methanoic acid",Textile and leather processing
+Propionic acid,79-09-4,"Propanoic acid",Food preservative
+Butyric acid,107-92-6,"Butanoic acid",Rancid butter odor
+Oxalic acid,144-62-7,"Ethanedioic acid",Cleaning agent
+Citric acid,77-92-9,"Hydroxypropane-tricarboxylic acid",Food additive
+Lactic acid,50-21-5,"Hydroxypropanoic acid",Food preservative
+Tartaric acid,87-69-4,"Dihydroxybutanedioic acid",Food additive
+Malic acid,6915-15-7,"Hydroxybutanedioic acid",Food additive
+Succinic acid,110-15-6,"Butanedioic acid",Food additive
+Adipic acid,124-04-9,"Hexanedioic acid",Nylon precursor
+Phthalic acid,88-99-3,"Benzene-dicarboxylic acid",Plasticizer precursor
+Terephthalic acid,100-21-0,"Benzene-dicarboxylic acid",PET plastic precursor
+Benzoic acid,65-85-0,"Benzenecarboxylic acid",Food preservative
+Salicylic acid,69-72-7,"Hydroxybenzoic acid",Aspirin precursor
+Aspirin,50-78-2,"Acetylsalicylic acid",Pain reliever
+Caffeine,58-08-2,"Trimethylxanthine",Stimulant
+Nicotine,54-11-5,"Methylpyrrolidin-yl-pyridine",Tobacco alkaloid
+Morphine,57-27-2,"Didehydro-epoxy-methylmorphinan-diol",Opioid analgesic
+Codeine,76-57-3,"Didehydro-epoxy-methoxy-methylmorphinan-ol",Opioid analgesic
+Heroin,561-27-3,"Diacetylmorphine",Illegal narcotic
+Cocaine,50-36-2,"Methyl-benzoyloxy-methyl-azabicyclo-octane-carboxylate",Illegal stimulant
+Amphetamine,300-62-9,"Phenylpropan-amine",Stimulant
+Methamphetamine,537-46-2,"N-Methyl-phenylpropan-amine",Illegal stimulant
+MDMA,42542-10-9,"Methylenedioxymethamphetamine",Illegal stimulant
+THC,1972-08-3,"trans-Tetrahydrocannabinol",Psychoactive compound
+CBD,13956-29-1,"Cannabidiol",Non-psychoactive cannabinoid
+Glucose,50-99-7,"D-Glucose;Dextrose",Blood sugar
+Fructose,57-48-7,"D-Fructose;Fruit sugar",Sweetener
+Sucrose,57-50-1,"Saccharose;Table sugar",Disaccharide sweetener
+Lactose,63-42-3,"Milk sugar",Disaccharide in milk
+Maltose,69-79-4,"Malt sugar",Disaccharide from starch
+Cellulose,9004-34-6,"Plant fiber",Structural polysaccharide
+Starch,9005-25-8,"Plant starch",Energy storage polysaccharide
+Glycogen,9037-95-6,"Animal starch",Animal starch
+Chitin,1398-61-4,"Insect exoskeleton",Structural polysaccharide
+Cholesterol,57-88-5,"Cholest-en-ol",Steroid alcohol
+Testosterone,58-22-0,"Hydroxyandrost-en-one",Male hormone
+Estradiol,50-28-2,"Estra-triene-diol",Female hormone
+Progesterone,57-83-0,"Pregn-ene-dione",Female hormone
+Cortisol,50-23-7,"Trihydroxypregn-ene-dione",Stress hormone
+Adrenaline,51-43-4,"Hydroxy-methylamino-ethyl-benzene-diol",Fight-or-flight hormone
+Serotonin,50-67-9,"Hydroxytryptamine",Neurotransmitter
+Dopamine,51-61-6,"Aminoethyl-benzene-diol",Neurotransmitter
+GABA,56-12-2,"Aminobutanoic acid",Inhibitory neurotransmitter
+Acetylcholine,51-84-3,"Acetoxy-trimethylethanaminium",Neurotransmitter
+Histamine,51-45-6,"Imidazol-yl-ethanamine",Inflammatory mediator
+Melatonin,73-31-4,"N-Acetyl-methoxytryptamine",Sleep hormone
+Insulin,9004-10-8,"Human insulin",Blood sugar regulation
+Hemoglobin,9008-02-0,"Hgb",Oxygen transport protein
+Albumin,9048-46-8,"Serum albumin",Blood protein
+DNA,9007-49-2,"Deoxyribonucleic acid",Genetic material
+RNA,63231-63-0,"Ribonucleic acid",Protein synthesis
+ATP,56-65-5,"Adenosine triphosphate",Cellular energy
+ADP,58-64-0,"Adenosine diphosphate",Energy metabolite
+AMP,61-19-8,"Adenosine monophosphate",Nucleotide
+cAMP,60-92-4,"Cyclic adenosine monophosphate",Signaling molecule
+NAD+,53-84-9,"Nicotinamide adenine dinucleotide",Electron carrier
+NADH,58-68-4,"Reduced nicotinamide adenine dinucleotide",Electron carrier
+NADP+,53-59-8,"Nicotinamide adenine dinucleotide phosphate",Electron carrier
+NADPH,2646-71-1,"Reduced nicotinamide adenine dinucleotide phosphate",Electron carrier
+CoA,85-61-0,"Coenzyme A",Metabolic cofactor
+Acetyl-CoA,72-89-9,"Acetyl coenzyme A",Metabolic intermediate
+Pyruvate,127-17-3,"Oxopropanoate",Glycolysis product
+Lactate,79-33-4,"Hydroxypropanoate",Anaerobic metabolism product
+Citrate,77-92-9,"Hydroxypropane-tricarboxylate",Krebs cycle intermediate
+α-Ketoglutarate,328-50-7,"Oxoglutarate",Krebs cycle intermediate
+Oxaloacetate,328-42-7,"Oxobutanedioate",Krebs cycle intermediate
+Malate,6915-15-7,"Hydroxybutanedioate",Krebs cycle intermediate
+Fumarate,110-17-8,"But-enedioate",Krebs cycle intermediate
+Succinate,150-90-3,"Butanedioate",Krebs cycle intermediate
+"Unknown Chemical",,Invalid CAS format,Edge case - missing name
+,75-09-2,,Edge case - missing name
+"Test Chemical",invalid-cas-123,,Edge case - invalid CAS format
+,,,Edge case - completely empty row
+DUPLICATE,79-01-6,"TCE duplicate",Edge case - duplicate CAS number
+duplicate,79-01-6,"tce duplicate",Edge case - case variation duplicate
+"Special Characters!@#",123-45-6,"Special chars",Edge case - special characters
+"Very Long Chemical Name That Exceeds Normal Length Limits",456-78-9,"Long name",Edge case - very long name
+"Chemical with tabs",789-01-2,"Tab separated",Edge case - tab characters
+"Chemical with commas",012-34-5,"Comma separated",Edge case - commas in name
+"Chemical with Unicode ñ",345-67-8,"Niño;Señor;Español",Edge case - unicode characters
+"1,2,3,4-Tetrachlorobenzene",634-66-2,"Tetrachlorobenzene",Multiple commas in systematic name
