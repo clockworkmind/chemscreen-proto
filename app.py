@@ -333,26 +333,82 @@ def show_upload_page():
                 st.success(f"✅ File uploaded successfully! Found {len(df)} rows.")
 
                 # Display preview
-                st.subheader("Preview")
-                st.dataframe(df.head(10), use_container_width=True)
+                st.subheader("Data Preview")
+
+                # Check if dataframe is large
+                if len(df) > 100:
+                    st.info(
+                        f"📊 Large dataset detected: {len(df)} rows. Showing first 100 rows in preview."
+                    )
+                    preview_df = df.head(100)
+                else:
+                    preview_df = df
+
+                # Display with virtual scrolling for performance
+                st.dataframe(
+                    preview_df,
+                    use_container_width=True,
+                    height=400,  # Fixed height for virtual scrolling
+                    hide_index=False,
+                )
 
                 # Column mapping
                 st.subheader("Column Mapping")
+
+                # Auto-detect columns
+                from chemscreen.processor import suggest_column_mapping
+
+                suggested_mapping = suggest_column_mapping(df)
+
                 col_names = df.columns.tolist()
 
-                name_col = st.selectbox(
-                    "Select Chemical Name Column",
-                    options=["None"] + col_names,
-                    help="Column containing chemical names",
-                    key="name_column_select",
-                )
+                # Show auto-detection results if found
+                if suggested_mapping.name_column or suggested_mapping.cas_column:
+                    st.success("🔍 Auto-detected column mappings:")
+                    detected_cols = []
+                    if suggested_mapping.name_column:
+                        detected_cols.append(
+                            f"• Chemical Name: **{suggested_mapping.name_column}**"
+                        )
+                    if suggested_mapping.cas_column:
+                        detected_cols.append(
+                            f"• CAS Number: **{suggested_mapping.cas_column}**"
+                        )
+                    if suggested_mapping.synonyms_column:
+                        detected_cols.append(
+                            f"• Synonyms: **{suggested_mapping.synonyms_column}**"
+                        )
+                    if suggested_mapping.notes_column:
+                        detected_cols.append(
+                            f"• Notes: **{suggested_mapping.notes_column}**"
+                        )
+                    st.markdown("\n".join(detected_cols))
 
-                cas_col = st.selectbox(
-                    "Select CAS Number Column",
-                    options=["None"] + col_names,
-                    help="Column containing CAS Registry Numbers",
-                    key="cas_column_select",
-                )
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    name_col = st.selectbox(
+                        "Chemical Name Column",
+                        options=["None"] + col_names,
+                        index=col_names.index(suggested_mapping.name_column) + 1
+                        if suggested_mapping.name_column
+                        and suggested_mapping.name_column in col_names
+                        else 0,
+                        help="Column containing chemical names",
+                        key="name_column_select",
+                    )
+
+                with col2:
+                    cas_col = st.selectbox(
+                        "CAS Number Column",
+                        options=["None"] + col_names,
+                        index=col_names.index(suggested_mapping.cas_column) + 1
+                        if suggested_mapping.cas_column
+                        and suggested_mapping.cas_column in col_names
+                        else 0,
+                        help="Column containing CAS Registry Numbers",
+                        key="cas_column_select",
+                    )
 
                 # Validate that at least one column is selected
                 if name_col == "None" and cas_col == "None":
@@ -386,17 +442,33 @@ def show_upload_page():
                                 # Store validated chemicals
                                 st.session_state.chemicals = result.valid_chemicals
 
-                                # Display results
-                                col1, col2, col3 = st.columns(3)
+                                # Display comprehensive results
+                                st.subheader("📊 Processing Summary")
+
+                                col1, col2, col3, col4 = st.columns(4)
                                 with col1:
                                     st.metric("Total Rows", result.total_rows)
                                 with col2:
                                     st.metric(
-                                        "Valid Chemicals", len(result.valid_chemicals)
+                                        "Valid Chemicals",
+                                        len(result.valid_chemicals),
+                                        delta=f"{len(result.valid_chemicals) - len(result.invalid_rows)} processed",
                                     )
                                 with col3:
                                     st.metric(
-                                        "Success Rate", f"{result.success_rate:.1f}%"
+                                        "Invalid Rows",
+                                        len(result.invalid_rows),
+                                        delta=None
+                                        if len(result.invalid_rows) == 0
+                                        else "-" + str(len(result.invalid_rows)),
+                                    )
+                                with col4:
+                                    st.metric(
+                                        "Success Rate",
+                                        f"{result.success_rate:.1f}%",
+                                        delta="Good"
+                                        if result.success_rate >= 90
+                                        else "Check data",
                                     )
 
                                 # Show warnings if any
@@ -446,35 +518,82 @@ def show_upload_page():
                                         f"✅ Successfully processed {len(result.valid_chemicals)} chemicals!"
                                     )
 
-                                    # Show preview of processed chemicals
+                                    # Show preview of processed chemicals with duplicate highlighting
                                     with st.expander(
                                         "Preview Processed Chemicals", expanded=True
                                     ):
+                                        # Get duplicates for highlighting
+                                        from chemscreen.processor import (
+                                            detect_duplicates,
+                                        )
+
+                                        duplicates_list = detect_duplicates(
+                                            result.valid_chemicals
+                                        )
+                                        duplicate_indices = set()
+                                        for dup1, dup2 in duplicates_list:
+                                            duplicate_indices.add(dup1)
+                                            duplicate_indices.add(dup2)
+
                                         preview_data = []
-                                        for chem in result.valid_chemicals[
-                                            :10
-                                        ]:  # Show first 10
+                                        for idx, chem in enumerate(
+                                            result.valid_chemicals[:50]
+                                        ):  # Show up to 50
+                                            is_duplicate = idx in duplicate_indices
                                             preview_data.append(
                                                 {
+                                                    "Index": idx + 1,
                                                     "Name": chem.name,
                                                     "CAS Number": chem.cas_number
                                                     or "N/A",
                                                     "Validated": "✅"
                                                     if chem.validated
                                                     else "⚠️",
-                                                    "Synonyms": ", ".join(chem.synonyms)
+                                                    "Duplicate": "🔁"
+                                                    if is_duplicate
+                                                    else "",
+                                                    "Synonyms": ", ".join(
+                                                        chem.synonyms[:3]
+                                                    )
+                                                    + (
+                                                        "..."
+                                                        if len(chem.synonyms) > 3
+                                                        else ""
+                                                    )
                                                     if chem.synonyms
                                                     else "N/A",
                                                 }
                                             )
                                         preview_df = pd.DataFrame(preview_data)
+
+                                        # Apply custom styling to highlight duplicates
                                         st.dataframe(
-                                            preview_df, use_container_width=True
+                                            preview_df,
+                                            use_container_width=True,
+                                            height=400,
+                                            hide_index=True,
+                                            column_config={
+                                                "Index": st.column_config.NumberColumn(
+                                                    "Index",
+                                                    help="Row number in the dataset",
+                                                    width="small",
+                                                ),
+                                                "Duplicate": st.column_config.TextColumn(
+                                                    "Dup",
+                                                    help="🔁 indicates duplicate entry",
+                                                    width="small",
+                                                ),
+                                                "Validated": st.column_config.TextColumn(
+                                                    "Valid",
+                                                    help="✅ = Valid CAS, ⚠️ = Invalid/No CAS",
+                                                    width="small",
+                                                ),
+                                            },
                                         )
 
-                                        if len(result.valid_chemicals) > 10:
+                                        if len(result.valid_chemicals) > 50:
                                             st.info(
-                                                f"Showing first 10 of {len(result.valid_chemicals)} chemicals"
+                                                f"Showing first 50 of {len(result.valid_chemicals)} chemicals"
                                             )
 
                                     st.balloons()
