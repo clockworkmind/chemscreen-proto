@@ -175,4 +175,5 @@ cython_debug/
 
 # dev tooling
 .dev
+dev/
 CLAUDE.md
