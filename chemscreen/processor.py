@@ -143,7 +143,7 @@ def parse_chemical_list(
 
 def detect_duplicates(chemicals: List[Chemical]) -> List[Tuple[int, int]]:
     """
-    Detect duplicate chemicals based on name or CAS.
+    Detect duplicate chemicals using vectorized operations for better performance.
 
     Args:
         chemicals: List of Chemical objects
@@ -151,27 +151,39 @@ def detect_duplicates(chemicals: List[Chemical]) -> List[Tuple[int, int]]:
     Returns:
         List of tuples with duplicate indices
     """
+    if not chemicals:
+        return []
+
+    # Convert to DataFrame for vectorized operations
+    data = []
+    for i, chem in enumerate(chemicals):
+        data.append(
+            {
+                "index": i,
+                "name_lower": chem.name.lower() if chem.name else "",
+                "cas_number": chem.cas_number or "",
+            }
+        )
+
+    df = pd.DataFrame(data)
     duplicates = []
 
-    # Check by CAS number first (more reliable)
-    cas_map: Dict[str, int] = {}
-    for i, chem in enumerate(chemicals):
-        if chem.cas_number:
-            if chem.cas_number in cas_map:
-                duplicates.append((cas_map[chem.cas_number], i))
-            else:
-                cas_map[chem.cas_number] = i
+    # Find CAS duplicates (more reliable)
+    cas_df = df[df["cas_number"] != ""]
+    if not cas_df.empty:
+        cas_dups = cas_df[cas_df.duplicated(subset=["cas_number"], keep="first")]
+        for _, dup_row in cas_dups.iterrows():
+            first_idx = df[df["cas_number"] == dup_row["cas_number"]].iloc[0]["index"]
+            duplicates.append((int(first_idx), int(dup_row["index"])))
 
-    # Check by name (case insensitive)
-    name_map: Dict[str, int] = {}
-    for i, chem in enumerate(chemicals):
-        name_lower = chem.name.lower()
-        if name_lower in name_map:
-            # Only flag as duplicate if not already flagged by CAS
-            if not any(dup[1] == i for dup in duplicates):
-                duplicates.append((name_map[name_lower], i))
-        else:
-            name_map[name_lower] = i
+    # Find name duplicates (excluding already found CAS duplicates)
+    already_found = {dup[1] for dup in duplicates}
+    name_df = df[~df["index"].isin(already_found) & (df["name_lower"] != "")]
+    if not name_df.empty:
+        name_dups = name_df[name_df.duplicated(subset=["name_lower"], keep="first")]
+        for _, dup_row in name_dups.iterrows():
+            first_idx = df[df["name_lower"] == dup_row["name_lower"]].iloc[0]["index"]
+            duplicates.append((int(first_idx), int(dup_row["index"])))
 
     return duplicates
 

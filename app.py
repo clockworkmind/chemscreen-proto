@@ -16,13 +16,12 @@ import pandas as pd
 sys.path.append(str(Path(__file__).parent))
 
 # Import our modules
-from chemscreen.processor import merge_duplicates
+from chemscreen.processor import merge_duplicates, detect_duplicates
 from chemscreen.models import CSVColumnMapping
 from chemscreen.cached_processors import (
     cached_process_csv_data,
     cached_suggest_column_mapping,
 )
-from chemscreen.optimized_processor import optimized_detect_duplicates
 from chemscreen.errors import (
     show_error_with_help,
     show_validation_help,
@@ -794,9 +793,7 @@ def show_upload_page():
 
                             # Check for duplicates and offer to merge
                             if result.valid_chemicals:
-                                duplicates = optimized_detect_duplicates(
-                                    result.valid_chemicals
-                                )
+                                duplicates = detect_duplicates(result.valid_chemicals)
                                 if duplicates:
                                     st.warning(
                                         f"Found {len(duplicates)} duplicate chemicals."
