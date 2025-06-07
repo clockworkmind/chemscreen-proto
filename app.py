@@ -11,6 +11,9 @@ import sys
 import logging
 from datetime import datetime
 import pandas as pd
+import asyncio
+import os
+import time
 
 # Add the chemscreen package to the path
 sys.path.append(str(Path(__file__).parent))
@@ -22,6 +25,7 @@ from chemscreen.cached_processors import (
     cached_process_csv_data,
     cached_suggest_column_mapping,
 )
+from chemscreen.pubmed import batch_search
 from chemscreen.errors import (
     show_error_with_help,
     show_validation_help,
@@ -1008,59 +1012,80 @@ def show_search_page():
 
     with col1:
         if st.button("🚀 Start Search", type="primary", use_container_width=True):
-            import time  # For search timing simulation
-
             st.session_state.current_batch_id = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-            # Enhanced loading states with realistic search simulation
+            # TODO: Integrate cache manager with batch_search function
+
+            # Get search parameters
+            date_range_years = st.session_state.get("date_range", 10)
+            max_results = st.session_state.get("max_results", 100)
+            include_reviews = st.session_state.get("include_reviews", True)
+            api_key = os.getenv("PUBMED_API_KEY")
+
+            # Enhanced loading states
             with st.spinner("Initializing search..."):
-                time.sleep(1)  # Simulate initialization
+                time.sleep(1)
 
             # Create progress with cancel functionality
             progress_bar, status_text, cancel_button, progress_container = (
                 create_progress_with_cancel("Searching chemicals")
             )
 
-            # Realistic search simulation
+            # Get chemicals to search (limit to 5 for demo)
             chemicals_to_search = st.session_state.chemicals[
                 : min(5, len(st.session_state.chemicals))
-            ]  # Demo with first 5
+            ]
 
-            for i, chemical in enumerate(chemicals_to_search):
-                if cancel_button:
-                    st.warning("⏸️ Search cancelled by user")
-                    break
+            # Progress callback function
+            async def progress_callback(progress, chemical):
+                if not cancel_button:
+                    progress_bar.progress(progress)
+                    status_text.text(f"🔍 Searching PubMed for: {chemical.name}")
 
-                # Show current chemical being searched
-                progress = (i + 1) / len(chemicals_to_search)
-                progress_bar.progress(progress)
-                status_text.text(f"🔍 Searching PubMed for: {chemical.name}")
+            try:
+                # Run the async batch search
+                search_results = asyncio.run(
+                    batch_search(
+                        chemicals=chemicals_to_search,
+                        max_results_per_chemical=max_results,
+                        date_range_years=date_range_years,
+                        include_reviews=include_reviews,
+                        api_key=api_key,
+                        progress_callback=progress_callback,
+                    )
+                )
 
-                # Simulate API call with realistic timing
-                time.sleep(0.8)
+                progress_bar.progress(1.0)
+                status_text.text("✅ Search complete!")
+                time.sleep(0.5)
+                progress_container.empty()
 
-                # Show intermediate steps
-                status_text.text(f"📄 Found papers for: {chemical.name}")
-                time.sleep(0.3)
+                # Store results in session state
+                st.session_state.search_results = search_results
 
-                status_text.text(f"⚖️ Scoring results for: {chemical.name}")
-                time.sleep(0.4)
+                # Calculate real stats
+                total_papers = sum(
+                    len(result.publications) for result in search_results
+                )
+                stats = {
+                    "Chemicals Searched": len(chemicals_to_search),
+                    "Papers Found": total_papers,
+                    "API Calls": len(
+                        [result for result in search_results if not result.from_cache]
+                    ),
+                }
+                show_success_with_stats(
+                    f"Batch search completed! Batch ID: {st.session_state.current_batch_id}",
+                    stats,
+                )
 
-            progress_bar.progress(1.0)
-            status_text.text("✅ Search complete!")
-            time.sleep(0.5)
-            progress_container.empty()
-
-            # Show completion message with stats
-            stats = {
-                "Chemicals Searched": len(chemicals_to_search),
-                "Papers Found": len(chemicals_to_search) * 25,  # Simulate results
-                "Time Taken": f"{len(chemicals_to_search) * 1.5:.1f}s",
-            }
-            show_success_with_stats(
-                f"Batch search completed! Batch ID: {st.session_state.current_batch_id}",
-                stats,
-            )
+            except Exception as e:
+                progress_container.empty()
+                show_error_with_help(
+                    "Search Failed",
+                    f"An error occurred during the search: {str(e)}",
+                    "Please check your API key and network connection. Try again with fewer chemicals.",
+                )
 
     with col2:
         if st.button("⏸️ Pause Search", use_container_width=True):
