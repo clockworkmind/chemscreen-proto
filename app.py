@@ -45,8 +45,8 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items={
-        "Get Help": "https://github.com/shanethacker/chemscreen-proto",
-        "Report a bug": "https://github.com/shanethacker/chemscreen-proto/issues",
+        "Get Help": "https://github.com/clockworkmind/chemscreen-proto",
+        "Report a bug": "https://github.com/clockworkmind/chemscreen-proto/issues",
         "About": "ChemScreen Prototype v1.0 - Batch Chemical Literature Search Tool",
     },
 )
@@ -466,10 +466,10 @@ def show_home_page():
 
         st.markdown("### 🔗 Quick Links")
         st.markdown(
-            "- [User Guide](https://github.com/shanethacker/chemscreen-proto/wiki)"
+            "- [User Guide](https://github.com/clockworkmind/chemscreen-proto/wiki)"
         )
         st.markdown(
-            "- [Report Issue](https://github.com/shanethacker/chemscreen-proto/issues)"
+            "- [Report Issue](https://github.com/clockworkmind/chemscreen-proto/issues)"
         )
         st.markdown("- [Demo Data](data/raw/demo_chemicals.csv)")
 
