@@ -992,7 +992,7 @@ def show_search_page():
         # API key status
         st.subheader("API Configuration")
         api_key_status = (
-            "✅ Configured" if st.secrets.get("PUBMED_API_KEY") else "❌ Not configured"
+            "✅ Configured" if os.getenv("PUBMED_API_KEY") else "❌ Not configured"
         )
         st.markdown(f"**PubMed API Key**: {api_key_status}")
 
