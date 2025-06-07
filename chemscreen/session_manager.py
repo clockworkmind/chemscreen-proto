@@ -7,24 +7,26 @@ from pathlib import Path
 from typing import List, Optional, Dict, Any
 
 from chemscreen.models import BatchSearchSession
+from chemscreen.config import get_config, Config
 
 logger = logging.getLogger(__name__)
-
-# Default session storage directory
-DEFAULT_SESSION_DIR = Path("./data/sessions")
 
 
 class SessionManager:
     """Manages session persistence and history."""
 
-    def __init__(self, session_dir: Optional[Path] = None):
+    def __init__(
+        self, session_dir: Optional[Path] = None, config: Optional[Config] = None
+    ):
         """
         Initialize session manager.
 
         Args:
-            session_dir: Directory for session storage
+            session_dir: Directory for session storage (uses config if None)
+            config: Configuration instance (uses global if None)
         """
-        self.session_dir = session_dir or DEFAULT_SESSION_DIR
+        self.config = config or get_config()
+        self.session_dir = session_dir or self.config.sessions_dir
         self.session_dir.mkdir(parents=True, exist_ok=True)
         self.index_file = self.session_dir / "index.json"
 
@@ -218,17 +220,18 @@ class SessionManager:
         except Exception as e:
             logger.error(f"Failed to remove session from index: {e}")
 
-    def cleanup_old_sessions(self, days_to_keep: int = 30) -> int:
+    def cleanup_old_sessions(self, days_to_keep: Optional[int] = None) -> int:
         """
         Clean up sessions older than specified days.
 
         Args:
-            days_to_keep: Number of days to keep sessions
+            days_to_keep: Number of days to keep sessions (uses config if None)
 
         Returns:
             Number of sessions deleted
         """
         try:
+            days_to_keep = days_to_keep or self.config.session_cleanup_days
             cutoff_date = datetime.now().timestamp() - (days_to_keep * 24 * 60 * 60)
             deleted_count = 0
 
