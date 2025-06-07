@@ -1434,6 +1434,14 @@ def show_export_page():
                     results=results_with_metrics, session=session
                 )
                 mime_type = "application/json"
+            else:
+                # Default to CSV if format is unexpected
+                filepath = export_manager.export_to_csv(
+                    results=results_with_metrics,
+                    session=session,
+                    include_abstracts=include_abstracts,
+                )
+                mime_type = "text/csv"
 
             status_text.text("✅ Export ready!")
             progress_bar.progress(1.0)
