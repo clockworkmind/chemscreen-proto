@@ -326,14 +326,21 @@ def load_demo_data(size: str):
         }
 
         if size not in size_map:
-            st.error(f"Invalid demo size: {size}")
+            show_error_with_help(
+                "invalid_parameter",
+                f"Invalid demo size '{size}'. Available sizes: {', '.join(size_map.keys())}",
+            )
             return
 
         # Load the demo file
         demo_file_path = Path(__file__).parent / "data" / "raw" / size_map[size]
 
         if not demo_file_path.exists():
-            st.error(f"Demo file not found: {demo_file_path}")
+            show_error_with_help(
+                "file_not_found",
+                f"Demo file missing: {demo_file_path.name}",
+                expand_help=True,
+            )
             logger.error(f"Demo file not found: {demo_file_path}")
             return
 
@@ -341,7 +348,9 @@ def load_demo_data(size: str):
         demo_data = pd.read_csv(demo_file_path)
 
         if demo_data.empty:
-            st.error("Demo data file is empty")
+            show_error_with_help(
+                "empty_file", f"Demo file {demo_file_path.name} contains no data"
+            )
             return
 
         # Create column mapping for demo data
@@ -403,21 +412,31 @@ def load_demo_data(size: str):
                     ):
                         st.info("These are intentional edge cases in the demo data:")
                         for error in result.invalid_rows:
-                            st.error(f"Row {error['row_number']}: {error['errors']}")
+                            show_error_with_help(
+                                "validation_error",
+                                f"Row {error['row_number']}: {error['errors']}",
+                            )
 
                 # Automatically navigate to search page after loading
                 if st.button("▶️ Go to Search", type="primary"):
                     st.rerun()
 
             else:
-                st.error("No valid chemicals found in demo data")
+                show_error_with_help(
+                    "no_valid_data",
+                    "Demo data contains no valid chemicals after processing",
+                )
 
     except FileNotFoundError:
-        st.error(f"Demo file not found for size: {size}")
+        show_error_with_help(
+            "file_not_found",
+            f"Demo file for size '{size}' is missing",
+            expand_help=True,
+        )
         logger.error(f"Demo file not found for size: {size}")
     except Exception as e:
-        st.error(f"Error loading demo data: {str(e)}")
-        logger.error(f"Demo data loading error: {e}", exc_info=True)
+        show_error_with_help("demo_data_error", f"Failed to load demo data: {str(e)}")
+        log_error_for_support(e, "demo data loading")
 
 
 # Page components
@@ -1131,11 +1150,31 @@ def show_search_page():
 
             except Exception as e:
                 progress_container.empty()
-                show_error_with_help(
-                    "Search Failed",
-                    f"An error occurred during the search: {str(e)}",
-                    "Please check your API key and network connection. Try again with fewer chemicals.",
-                )
+
+                # Determine specific error type for better user guidance
+                error_message = str(e).lower()
+                if "rate limit" in error_message or "429" in error_message:
+                    show_error_with_help(
+                        "rate_limit_exceeded",
+                        f"PubMed rate limit reached: {str(e)}",
+                        expand_help=True,
+                    )
+                elif "network" in error_message or "connection" in error_message:
+                    show_error_with_help(
+                        "network_error", f"Network connectivity issue: {str(e)}"
+                    )
+                elif "api_key" in error_message or "unauthorized" in error_message:
+                    show_error_with_help(
+                        "api_key_required",
+                        f"API authentication issue: {str(e)}",
+                        expand_help=True,
+                    )
+                else:
+                    show_error_with_help(
+                        "search_failed", f"Search operation failed: {str(e)}"
+                    )
+
+                log_error_for_support(e, "batch search")
 
     with col2:
         if st.button("⏸️ Pause Search", use_container_width=True):
@@ -1507,11 +1546,30 @@ def show_export_page():
             )
         except Exception as e:
             progress_container.empty()
-            show_error_with_help(
-                "Export Failed",
-                f"An error occurred during export generation: {str(e)}",
-                "Please try again with a different format or check your data.",
-            )
+
+            # Determine specific export error type
+            error_message = str(e).lower()
+            if "permission" in error_message or "access" in error_message:
+                show_error_with_help(
+                    "file_permission_error",
+                    f"Cannot write export file: {str(e)}",
+                    expand_help=True,
+                )
+            elif "disk" in error_message or "space" in error_message:
+                show_error_with_help(
+                    "disk_space_error", f"Insufficient disk space: {str(e)}"
+                )
+            elif "memory" in error_message or "too large" in error_message:
+                show_error_with_help(
+                    "large_dataset_error", f"Dataset too large for export: {str(e)}"
+                )
+            elif export_format == "Excel (XLSX)" and "openpyxl" in error_message:
+                show_error_with_help("excel_error", f"Excel export failed: {str(e)}")
+            else:
+                show_error_with_help(
+                    "export_failed", f"Export generation failed: {str(e)}"
+                )
+
             log_error_for_support(e, "export generation")
 
 
@@ -1631,7 +1689,10 @@ def show_history_page():
                         "Session data has been restored. Navigate to Results or Export pages to view the data."
                     )
                 else:
-                    st.error(f"Failed to load session {selected_session_id}")
+                    show_error_with_help(
+                        "session_load_failed",
+                        f"Could not load session {selected_session_id}. The session file may be corrupted or missing.",
+                    )
 
         with col2:
             if st.button("🗑️ Delete Session"):
@@ -1639,7 +1700,10 @@ def show_history_page():
                     st.success(f"Session {selected_session_id} deleted")
                     st.rerun()
                 else:
-                    st.error(f"Failed to delete session {selected_session_id}")
+                    show_error_with_help(
+                        "session_delete_failed",
+                        f"Could not delete session {selected_session_id}. Check file permissions.",
+                    )
 
         with col3:
             if st.button("📋 View Details"):
@@ -1661,7 +1725,10 @@ def show_history_page():
                         }
                     )
                 else:
-                    st.error("Failed to load session details")
+                    show_error_with_help(
+                        "session_details_failed",
+                        f"Could not load details for session {selected_session_id}",
+                    )
 
 
 # Main application
