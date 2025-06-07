@@ -48,7 +48,7 @@ class SessionManager:
             session_data = session.model_dump()
 
             # Handle datetime serialization
-            def serialize_datetime(obj):
+            def serialize_datetime(obj: Any) -> str:
                 if isinstance(obj, datetime):
                     return obj.isoformat()
                 raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
@@ -113,7 +113,7 @@ class SessionManager:
             with open(self.index_file, "r", encoding="utf-8") as f:
                 index_data = json.load(f)
 
-            sessions = index_data.get("sessions", [])
+            sessions: List[Dict[str, Any]] = index_data.get("sessions", [])
 
             # Sort by creation date (newest first)
             sessions.sort(key=lambda x: x.get("created_at", ""), reverse=True)
