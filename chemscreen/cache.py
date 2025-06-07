@@ -1,6 +1,5 @@
 """File-based caching system for API responses."""
 
-import os
 import json
 import hashlib
 import logging
@@ -9,32 +8,36 @@ from pathlib import Path
 from typing import Optional, Dict, Any
 
 from chemscreen.models import SearchResult, Chemical, Publication
+from chemscreen.config import get_config, Config
 
 logger = logging.getLogger(__name__)
-
-# Default cache settings
-DEFAULT_CACHE_DIR = Path("./data/cache")
-DEFAULT_TTL_HOURS = 24  # Cache time-to-live in hours
 
 
 class CacheManager:
     """Manages file-based caching of search results."""
 
     def __init__(
-        self, cache_dir: Optional[Path] = None, ttl_hours: int = DEFAULT_TTL_HOURS
+        self,
+        cache_dir: Optional[Path] = None,
+        ttl_seconds: Optional[int] = None,
+        config: Optional[Config] = None,
     ):
         """
         Initialize cache manager.
 
         Args:
-            cache_dir: Directory for cache files
-            ttl_hours: Time-to-live for cache entries in hours
+            cache_dir: Directory for cache files (uses config if None)
+            ttl_seconds: Time-to-live for cache entries in seconds (uses config if None)
+            config: Configuration instance (uses global if None)
         """
-        self.cache_dir = cache_dir or DEFAULT_CACHE_DIR
-        self.ttl_hours = ttl_hours
+        self.config = config or get_config()
+        self.cache_dir = cache_dir or self.config.cache_dir
+        self.ttl_seconds = ttl_seconds or self.config.cache_ttl
+        self.enabled = self.config.cache_enabled
 
         # Create cache directory if it doesn't exist
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        if self.enabled:
+            self.cache_dir.mkdir(parents=True, exist_ok=True)
 
     def _generate_cache_key(
         self,
@@ -72,7 +75,7 @@ class CacheManager:
         file_time = datetime.fromtimestamp(cache_path.stat().st_mtime)
         age = datetime.now() - file_time
 
-        return age < timedelta(hours=self.ttl_hours)
+        return age < timedelta(seconds=self.ttl_seconds)
 
     def get(
         self,
@@ -93,6 +96,9 @@ class CacheManager:
         Returns:
             SearchResult if cached and valid, None otherwise
         """
+        if not self.enabled:
+            return None
+
         cache_key = self._generate_cache_key(
             chemical, date_range_years, max_results, include_reviews
         )
@@ -135,8 +141,8 @@ class CacheManager:
         Returns:
             bool: True if saved successfully
         """
-        if result.error:
-            # Don't cache errors
+        if not self.enabled or result.error:
+            # Don't cache if disabled or if there are errors
             return False
 
         cache_key = self._generate_cache_key(
@@ -262,17 +268,17 @@ class CacheManager:
 _cache_manager: Optional[CacheManager] = None
 
 
-def get_cache_manager() -> CacheManager:
+def get_cache_manager(config: Optional[Config] = None) -> CacheManager:
     """Get or create global cache manager instance."""
     global _cache_manager
 
     if _cache_manager is None:
-        # Check environment variables
-        cache_dir = os.getenv("CACHE_DIR")
-        ttl_hours = int(os.getenv("CACHE_TTL_HOURS", str(DEFAULT_TTL_HOURS)))
-
-        _cache_manager = CacheManager(
-            cache_dir=Path(cache_dir) if cache_dir else None, ttl_hours=ttl_hours
-        )
+        _cache_manager = CacheManager(config=config)
 
     return _cache_manager
+
+
+def reset_cache_manager() -> None:
+    """Reset the global cache manager instance (for testing)."""
+    global _cache_manager
+    _cache_manager = None

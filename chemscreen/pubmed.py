@@ -8,6 +8,7 @@ from typing import List, Optional, Any, Dict
 import xml.etree.ElementTree as ET
 
 from chemscreen.models import Chemical, Publication, SearchResult
+from chemscreen.config import get_config, Config
 
 logger = logging.getLogger(__name__)
 
@@ -15,10 +16,6 @@ logger = logging.getLogger(__name__)
 EUTILS_BASE = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
 ESEARCH_URL = f"{EUTILS_BASE}/esearch.fcgi"
 EFETCH_URL = f"{EUTILS_BASE}/efetch.fcgi"
-
-# Rate limiting
-DEFAULT_RATE_LIMIT = 3  # requests per second without API key
-API_KEY_RATE_LIMIT = 10  # requests per second with API key
 
 
 class RateLimiter:
@@ -45,15 +42,17 @@ class RateLimiter:
 class PubMedClient:
     """Async client for PubMed E-utilities API."""
 
-    def __init__(self, api_key: Optional[str] = None):
-        self.api_key = api_key
-        self.rate_limit = API_KEY_RATE_LIMIT if api_key else DEFAULT_RATE_LIMIT
+    def __init__(self, api_key: Optional[str] = None, config: Optional[Config] = None):
+        self.config = config or get_config()
+        self.api_key = api_key or self.config.pubmed_api_key
+        self.rate_limit = self.config.get_api_rate_limit()
         self.rate_limiter = RateLimiter(self.rate_limit)
         self.session: Optional[aiohttp.ClientSession] = None
+        self.timeout = aiohttp.ClientTimeout(total=self.config.request_timeout)
 
     async def __aenter__(self) -> "PubMedClient":
         """Async context manager entry."""
-        self.session = aiohttp.ClientSession()
+        self.session = aiohttp.ClientSession(timeout=self.timeout)
         return self
 
     async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
@@ -64,10 +63,18 @@ class PubMedClient:
     def _build_search_query(
         self,
         chemical: Chemical,
-        date_range_years: int = 10,
-        include_reviews: bool = True,
+        date_range_years: Optional[int] = None,
+        include_reviews: Optional[bool] = None,
     ) -> str:
         """Build PubMed search query for a chemical."""
+        # Use config defaults if not provided
+        date_range_years = date_range_years or self.config.default_date_range_years
+        include_reviews = (
+            include_reviews
+            if include_reviews is not None
+            else self.config.default_include_reviews
+        )
+
         # Start with chemical name
         terms = [f'"{chemical.name}"[Title/Abstract]']
 
@@ -96,23 +103,26 @@ class PubMedClient:
     async def search(
         self,
         chemical: Chemical,
-        max_results: int = 100,
-        date_range_years: int = 10,
-        include_reviews: bool = True,
+        max_results: Optional[int] = None,
+        date_range_years: Optional[int] = None,
+        include_reviews: Optional[bool] = None,
     ) -> SearchResult:
         """
         Search PubMed for publications about a chemical.
 
         Args:
             chemical: Chemical to search for
-            max_results: Maximum number of results to retrieve
-            date_range_years: Years to search back
-            include_reviews: Whether to include review articles
+            max_results: Maximum number of results to retrieve (uses config default if None)
+            date_range_years: Years to search back (uses config default if None)
+            include_reviews: Whether to include review articles (uses config default if None)
 
         Returns:
             SearchResult object
         """
         start_time = asyncio.get_event_loop().time()
+
+        # Use config defaults if not provided
+        max_results = max_results or self.config.max_results_per_chemical
 
         try:
             # Build search query
@@ -174,6 +184,12 @@ class PubMedClient:
         if self.api_key:
             params["api_key"] = self.api_key
 
+        # Add tool name and email if configured
+        if self.config.pubmed_tool_name:
+            params["tool"] = self.config.pubmed_tool_name
+        if self.config.pubmed_email:
+            params["email"] = self.config.pubmed_email
+
         if self.session is None:
             raise RuntimeError("Session not initialized")
 
@@ -201,6 +217,12 @@ class PubMedClient:
 
         if self.api_key:
             params["api_key"] = self.api_key
+
+        # Add tool name and email if configured
+        if self.config.pubmed_tool_name:
+            params["tool"] = self.config.pubmed_tool_name
+        if self.config.pubmed_email:
+            params["email"] = self.config.pubmed_email
 
         if self.session is None:
             raise RuntimeError("Session not initialized")
@@ -303,29 +325,32 @@ class PubMedClient:
 
 async def batch_search(
     chemicals: List[Chemical],
-    max_results_per_chemical: int = 100,
-    date_range_years: int = 10,
-    include_reviews: bool = True,
+    max_results_per_chemical: Optional[int] = None,
+    date_range_years: Optional[int] = None,
+    include_reviews: Optional[bool] = None,
     api_key: Optional[str] = None,
     progress_callback: Optional[Any] = None,
+    config: Optional[Config] = None,
 ) -> List[SearchResult]:
     """
     Perform batch search for multiple chemicals.
 
     Args:
         chemicals: List of chemicals to search
-        max_results_per_chemical: Max results per chemical
-        date_range_years: Years to search back
-        include_reviews: Include review articles
-        api_key: PubMed API key
+        max_results_per_chemical: Max results per chemical (uses config default if None)
+        date_range_years: Years to search back (uses config default if None)
+        include_reviews: Include review articles (uses config default if None)
+        api_key: PubMed API key (uses config if None)
         progress_callback: Callback for progress updates
+        config: Configuration instance (uses global if None)
 
     Returns:
         List of SearchResult objects
     """
+    config = config or get_config()
     results = []
 
-    async with PubMedClient(api_key) as client:
+    async with PubMedClient(api_key, config) as client:
         for i, chemical in enumerate(chemicals):
             # Search for chemical
             result = await client.search(

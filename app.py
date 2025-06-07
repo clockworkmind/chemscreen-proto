@@ -12,11 +12,13 @@ import logging
 from datetime import datetime
 import pandas as pd
 import asyncio
-import os
 import time
 
 # Add the chemscreen package to the path
 sys.path.append(str(Path(__file__).parent))
+
+# Import and initialize configuration
+from chemscreen.config import initialize_config
 
 # Import our modules
 from chemscreen.processor import merge_duplicates, detect_duplicates
@@ -39,16 +41,29 @@ from chemscreen.errors import (
     get_feature_help,
 )
 
-# Configure logging
+# Initialize configuration system
+config = initialize_config()
+
+# Configure logging using config
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=getattr(logging, config.log_level),
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
+# Create required directories
+config.create_directories()
+
+# Log configuration warnings if any
+config_warnings = config.validate_configuration()
+if config_warnings:
+    for warning in config_warnings:
+        logger.warning(f"Configuration: {warning}")
+
 # Page configuration must be the first Streamlit command
 st.set_page_config(
-    page_title="ChemScreen - Chemical Literature Search",
-    page_icon="🧪",
+    page_title=config.page_title,
+    page_icon=config.page_icon,
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items={
@@ -72,11 +87,11 @@ def init_session_state():
         st.session_state.search_history = []
     if "settings" not in st.session_state:
         st.session_state.settings = {
-            "date_range_years": 10,
-            "max_results_per_chemical": 100,
-            "include_reviews": True,
-            "cache_enabled": True,
-            "max_batch_size": 200,
+            "date_range_years": config.default_date_range_years,
+            "max_results_per_chemical": config.max_results_per_chemical,
+            "include_reviews": config.default_include_reviews,
+            "cache_enabled": config.cache_enabled,
+            "max_batch_size": config.max_batch_size,
         }
 
 
@@ -103,7 +118,9 @@ def load_custom_css():
 
     /* Header styling */
     .stApp h1 {
-        color: #0066CC;
+        color: """
+        + config.theme_primary_color
+        + """;
         padding-bottom: 1rem;
         border-bottom: 2px solid #e0e0e0;
         margin-bottom: 2rem;
@@ -116,7 +133,9 @@ def load_custom_css():
 
     /* Button styling */
     .stButton > button {
-        background-color: #0066CC;
+        background-color: """
+        + config.theme_primary_color
+        + """;
         color: white;
         border: none;
         padding: 0.5rem 1rem;
@@ -160,7 +179,9 @@ def load_custom_css():
 
     /* Progress bar custom styling */
     .stProgress > div > div > div > div {
-        background-color: #0066CC;
+        background-color: """
+        + config.theme_primary_color
+        + """;
     }
 
     /* Table styling */
@@ -545,7 +566,7 @@ def show_upload_page():
                     return
 
                 # Check batch size limits
-                MAX_BATCH_SIZE = 200  # As per requirements
+                MAX_BATCH_SIZE = config.max_batch_size
                 if len(df) > MAX_BATCH_SIZE:
                     show_error_with_help(
                         "batch_too_large",
@@ -745,7 +766,7 @@ def show_upload_page():
                                 return
 
                             # Initial validation and batch size check
-                            MAX_BATCH_SIZE = 200
+                            MAX_BATCH_SIZE = config.max_batch_size
                             if len(df) > MAX_BATCH_SIZE:
                                 show_error_with_help(
                                     "batch_too_large",
@@ -998,7 +1019,7 @@ def show_search_page():
         help_info = get_feature_help("batch_processing")
         show_help_tooltip(help_info["title"], help_info["content"], help_info["icon"])
         chemical_count = len(st.session_state.chemicals)
-        MAX_BATCH_SIZE = 200
+        MAX_BATCH_SIZE = config.max_batch_size
 
         if chemical_count > MAX_BATCH_SIZE:
             st.error(f"❌ Too many chemicals: {chemical_count} (max: {MAX_BATCH_SIZE})")
@@ -1014,7 +1035,7 @@ def show_search_page():
         # API key status
         st.subheader("API Configuration")
         api_key_status = (
-            "✅ Configured" if os.getenv("PUBMED_API_KEY") else "❌ Not configured"
+            "✅ Configured" if config.pubmed_api_key else "❌ Not configured"
         )
         st.markdown(f"**PubMed API Key**: {api_key_status}")
 
@@ -1060,7 +1081,7 @@ def show_search_page():
             date_range_years = st.session_state.get("date_range", 10)
             max_results = st.session_state.get("max_results", 100)
             include_reviews = st.session_state.get("include_reviews", True)
-            api_key = os.getenv("PUBMED_API_KEY")
+            api_key = config.pubmed_api_key
 
             # Enhanced loading states
             with st.spinner("Initializing search..."):

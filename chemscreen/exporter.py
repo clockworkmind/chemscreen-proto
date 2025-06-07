@@ -19,6 +19,7 @@ except ImportError:
     logger.warning("openpyxl not available, Excel export disabled")
 
 from chemscreen.models import SearchResult, QualityMetrics, BatchSearchSession
+from chemscreen.config import get_config, Config
 
 logger = logging.getLogger(__name__)
 
@@ -26,14 +27,18 @@ logger = logging.getLogger(__name__)
 class ExportManager:
     """Manages export of search results to various formats."""
 
-    def __init__(self, export_dir: Optional[Path] = None):
+    def __init__(
+        self, export_dir: Optional[Path] = None, config: Optional[Config] = None
+    ):
         """
         Initialize export manager.
 
         Args:
-            export_dir: Directory for export files
+            export_dir: Directory for export files (uses config if None)
+            config: Configuration instance (uses global if None)
         """
-        self.export_dir = export_dir or Path("./data/processed")
+        self.config = config or get_config()
+        self.export_dir = export_dir or self.config.exports_dir
         self.export_dir.mkdir(parents=True, exist_ok=True)
 
     def export_to_csv(
