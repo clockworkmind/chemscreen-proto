@@ -9,14 +9,15 @@ from chemscreen import processor
 @st.cache_data(show_spinner=False)
 def cached_process_csv_data(
     df: pd.DataFrame,
-    column_mapping: CSVColumnMapping,
+    _column_mapping: CSVColumnMapping,
 ) -> CSVUploadResult:
     """
     Cached version of process_csv_data for better performance with large datasets.
 
     This function is cached by Streamlit to avoid reprocessing the same data.
+    The underscore prefix on _column_mapping tells Streamlit not to hash this parameter.
     """
-    return processor.process_csv_data(df, column_mapping)
+    return processor.process_csv_data(df, _column_mapping)
 
 
 @st.cache_data(show_spinner=False)
