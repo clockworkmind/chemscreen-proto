@@ -1003,7 +1003,25 @@ def show_search_page():
 
     # Chemical list preview
     with st.expander("View Chemical List", expanded=False):
-        st.dataframe(st.session_state.chemicals, use_container_width=True)
+        # Convert Chemical objects to a display-friendly DataFrame
+        if st.session_state.chemicals:
+            chemicals_data = []
+            for chemical in st.session_state.chemicals:
+                chemicals_data.append(
+                    {
+                        "Name": chemical.name,
+                        "CAS Number": chemical.cas_number or "N/A",
+                        "Synonyms": ", ".join(chemical.synonyms)
+                        if chemical.synonyms
+                        else "None",
+                        "Validated": "✅" if chemical.validated else "❌",
+                        "Notes": chemical.notes or "",
+                    }
+                )
+            chemicals_df = pd.DataFrame(chemicals_data)
+            st.dataframe(chemicals_df, use_container_width=True)
+        else:
+            st.info("No chemicals loaded.")
 
     # Search execution
     st.subheader("Execute Search")
