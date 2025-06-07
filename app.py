@@ -20,13 +20,14 @@ sys.path.append(str(Path(__file__).parent))
 
 # Import our modules
 from chemscreen.processor import merge_duplicates, detect_duplicates
-from chemscreen.models import CSVColumnMapping
+from chemscreen.models import CSVColumnMapping, BatchSearchSession, SearchParameters
 from chemscreen.cached_processors import (
     cached_process_csv_data,
     cached_suggest_column_mapping,
 )
 from chemscreen.pubmed import batch_search
 from chemscreen.analyzer import calculate_quality_metrics
+from chemscreen.exporter import ExportManager
 from chemscreen.errors import (
     show_error_with_help,
     show_validation_help,
@@ -1318,19 +1319,17 @@ def show_export_page():
             help="Choose the format for your export file",
         )
 
-        _include_metadata = st.checkbox(
+        include_metadata = st.checkbox(
             "Include Search Metadata",
             value=True,
             help="Include search parameters and timestamp",
         )
 
-        _include_abstracts = st.checkbox(
+        include_abstracts = st.checkbox(
             "Include Abstracts",
             value=False,
             help="Include paper abstracts (increases file size)",
         )
-
-        # TODO: Pass _include_metadata and _include_abstracts to export function
 
         if export_format == "Excel (XLSX)":
             st.info(
@@ -1340,66 +1339,147 @@ def show_export_page():
     with col2:
         st.subheader("Export Preview")
 
-        # TODO: Show preview of export data
-        st.info("Export preview will appear here")
+        # Show export summary
+        if st.session_state.search_results:
+            total_publications = sum(
+                len(result.publications) for result in st.session_state.search_results
+            )
+            successful_searches = len(
+                [r for r in st.session_state.search_results if not r.error]
+            )
 
-        file_size_estimate = "~250 KB"  # TODO: Calculate actual size
-        st.metric("Estimated File Size", file_size_estimate)
+            st.write("**Export will include:**")
+            st.write(f"• {len(st.session_state.chemicals)} chemicals")
+            st.write(f"• {successful_searches} successful searches")
+            st.write(f"• {total_publications} publications")
+            if include_abstracts:
+                st.write("• Publication abstracts")
+            if include_metadata:
+                st.write("• Search metadata and parameters")
+        else:
+            st.info("No data available for export preview")
 
     st.markdown("---")
 
-    # Export button with enhanced loading states
+    # Export button with real export functionality
     if st.button("📥 Generate Export", type="primary"):
-        import time  # For export timing simulation
-
         # Create progress indicators for export
         progress_bar, status_text, cancel_button, progress_container = (
             create_progress_with_cancel("Generating export")
         )
 
         try:
-            # Simulate export steps with progress
+            # Initialize export manager
+            export_manager = ExportManager()
+
+            # Prepare data for export
             status_text.text("📊 Collecting search results...")
             progress_bar.progress(0.2)
-            time.sleep(0.5)
 
             if cancel_button:
                 st.warning("⏸️ Export cancelled by user")
                 progress_container.empty()
                 return
 
-            status_text.text("📋 Formatting data...")
-            progress_bar.progress(0.5)
-            time.sleep(0.8)
+            # Create session object for export
+            search_results = st.session_state.search_results
+            batch_id = st.session_state.get("current_batch_id", "unknown")
 
-            status_text.text("📄 Creating spreadsheet...")
-            progress_bar.progress(0.8)
-            time.sleep(0.7)
+            # Create search parameters from session state
+            search_params = SearchParameters(
+                date_range_years=st.session_state.get("date_range", 10),
+                max_results=st.session_state.get("max_results", 100),
+                include_reviews=st.session_state.get("include_reviews", True),
+            )
+
+            # Create session object
+            session = BatchSearchSession(
+                batch_id=batch_id,
+                chemicals=st.session_state.chemicals,
+                parameters=search_params,
+                status="completed",
+            )
+
+            # Prepare results with quality metrics
+            status_text.text("📋 Calculating quality metrics...")
+            progress_bar.progress(0.4)
+
+            results_with_metrics = []
+            for result in search_results:
+                metrics = calculate_quality_metrics(result)
+                results_with_metrics.append((result, metrics))
+
+            # Generate export based on format
+            status_text.text("📄 Creating export file...")
+            progress_bar.progress(0.7)
+
+            if export_format == "CSV":
+                filepath = export_manager.export_to_csv(
+                    results=results_with_metrics,
+                    session=session,
+                    include_abstracts=include_abstracts,
+                )
+                mime_type = "text/csv"
+            elif export_format == "Excel (XLSX)":
+                filepath = export_manager.export_to_excel(
+                    results=results_with_metrics,
+                    session=session,
+                    include_abstracts=include_abstracts,
+                )
+                mime_type = (
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+            elif export_format == "JSON":
+                filepath = export_manager.export_to_json(
+                    results=results_with_metrics, session=session
+                )
+                mime_type = "application/json"
+            else:
+                # Default to CSV if format is unexpected
+                filepath = export_manager.export_to_csv(
+                    results=results_with_metrics,
+                    session=session,
+                    include_abstracts=include_abstracts,
+                )
+                mime_type = "text/csv"
 
             status_text.text("✅ Export ready!")
             progress_bar.progress(1.0)
             time.sleep(0.3)
             progress_container.empty()
 
-            # Show success with file info
+            # Read the generated file for download
+            with open(filepath, "rb") as f:
+                file_data = f.read()
+
+            # Show success with real file info
+            file_size_kb = len(file_data) / 1024
             stats = {
-                "File Size": "245 KB",
+                "File Size": f"{file_size_kb:.1f} KB",
                 "Chemicals": len(st.session_state.chemicals),
-                "Format": "Excel (.xlsx)",
+                "Format": export_format,
+                "Publications": sum(
+                    len(result.publications) for result, _ in results_with_metrics
+                ),
             }
             show_success_with_stats(
                 "Export file generated successfully!", stats, show_balloons=False
             )
 
-            # TODO: Provide actual download button
+            # Provide actual download button
             st.download_button(
                 label="📥 Download Export",
-                data="Sample export data",  # TODO: Use actual export data
-                file_name=f"chemscreen_export_{st.session_state.current_batch_id}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                data=file_data,
+                file_name=filepath.name,
+                mime=mime_type,
             )
         except Exception as e:
-            show_error_with_help("processing_failed", str(e))
+            progress_container.empty()
+            show_error_with_help(
+                "Export Failed",
+                f"An error occurred during export generation: {str(e)}",
+                "Please try again with a different format or check your data.",
+            )
             log_error_for_support(e, "export generation")
 
 
