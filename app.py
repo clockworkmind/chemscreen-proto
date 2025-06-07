@@ -1050,10 +1050,8 @@ def show_search_page():
                 create_progress_with_cancel("Searching chemicals")
             )
 
-            # Get chemicals to search (limit to 5 for demo)
-            chemicals_to_search = st.session_state.chemicals[
-                : min(5, len(st.session_state.chemicals))
-            ]
+            # Get all chemicals to search
+            chemicals_to_search = st.session_state.chemicals
 
             # Progress callback function
             async def progress_callback(progress, chemical):
