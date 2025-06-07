@@ -16,13 +16,21 @@ import pandas as pd
 sys.path.append(str(Path(__file__).parent))
 
 # Import our modules
-from chemscreen.processor import merge_duplicates
+from chemscreen.processor import merge_duplicates, detect_duplicates
 from chemscreen.models import CSVColumnMapping
 from chemscreen.cached_processors import (
     cached_process_csv_data,
     cached_suggest_column_mapping,
 )
-from chemscreen.optimized_processor import optimized_detect_duplicates
+from chemscreen.errors import (
+    show_error_with_help,
+    show_validation_help,
+    create_progress_with_cancel,
+    show_success_with_stats,
+    log_error_for_support,
+    show_help_tooltip,
+    get_feature_help,
+)
 
 # Configure logging
 logging.basicConfig(
@@ -37,8 +45,8 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items={
-        "Get Help": "https://github.com/shanethacker/chemscreen-proto",
-        "Report a bug": "https://github.com/shanethacker/chemscreen-proto/issues",
+        "Get Help": "https://github.com/clockworkmind/chemscreen-proto",
+        "Report a bug": "https://github.com/clockworkmind/chemscreen-proto/issues",
         "About": "ChemScreen Prototype v1.0 - Batch Chemical Literature Search Tool",
     },
 )
@@ -63,6 +71,16 @@ def init_session_state():
             "cache_enabled": True,
             "max_batch_size": 200,
         }
+
+
+def reset_session():
+    """Reset session state to start over."""
+    st.session_state.chemicals = []
+    st.session_state.search_results = {}
+    st.session_state.current_batch_id = None
+    # Keep search history and settings
+    st.success("✅ Session reset! You can now upload a new file.")
+    st.rerun()
 
 
 # Custom CSS for better styling
@@ -261,6 +279,22 @@ def setup_sidebar():
 
         st.markdown("---")
 
+        # Reset functionality
+        if (
+            len(st.session_state.chemicals) > 0
+            or len(st.session_state.search_results) > 0
+        ):
+            st.subheader("🔄 Reset")
+            if st.button(
+                "🗑️ Clear All Data",
+                help="Clear uploaded chemicals and search results to start over",
+                use_container_width=True,
+                type="secondary",
+            ):
+                reset_session()
+
+        st.markdown("---")
+
         # Footer
         st.caption("ChemScreen Prototype v1.0")
         st.caption("© 2025 - For Research Use Only")
@@ -311,23 +345,31 @@ def load_demo_data(size: str):
             notes_column="notes",
         )
 
-        # Process the demo data with progress indicator
-        progress_container = st.container()
-        with progress_container:
-            progress_bar = st.progress(0)
-            status_text = st.empty()
+        # Process the demo data with enhanced loading states
+        with st.spinner(f"Loading {size} demo dataset..."):
+            # Show detailed progress
+            progress_container = st.container()
+            with progress_container:
+                progress_bar = st.progress(0)
+                status_text = st.empty()
 
-            status_text.text(f"📂 Loading {size} demo dataset...")
-            progress_bar.progress(0.2)
+                status_text.text("📂 Reading demo file...")
+                progress_bar.progress(0.2)
+                time.sleep(0.2)
 
-            result = cached_process_csv_data(demo_data, column_mapping)
+                status_text.text("🔍 Processing chemical data...")
+                progress_bar.progress(0.4)
 
-            progress_bar.progress(0.8)
-            status_text.text("✨ Finalizing demo data...")
+                result = cached_process_csv_data(demo_data, column_mapping)
 
-            progress_bar.progress(1.0)
-            time.sleep(0.3)
-            progress_container.empty()
+                status_text.text("✅ Validating chemicals...")
+                progress_bar.progress(0.8)
+                time.sleep(0.2)
+
+                status_text.text("✨ Demo data ready!")
+                progress_bar.progress(1.0)
+                time.sleep(0.3)
+                progress_container.empty()
 
             if result.valid_chemicals:
                 st.session_state.chemicals = result.valid_chemicals
@@ -424,10 +466,10 @@ def show_home_page():
 
         st.markdown("### 🔗 Quick Links")
         st.markdown(
-            "- [User Guide](https://github.com/shanethacker/chemscreen-proto/wiki)"
+            "- [User Guide](https://github.com/clockworkmind/chemscreen-proto/wiki)"
         )
         st.markdown(
-            "- [Report Issue](https://github.com/shanethacker/chemscreen-proto/issues)"
+            "- [Report Issue](https://github.com/clockworkmind/chemscreen-proto/issues)"
         )
         st.markdown("- [Demo Data](data/raw/demo_chemicals.csv)")
 
@@ -440,6 +482,10 @@ def show_upload_page():
     Upload a CSV file containing the chemicals you want to search. The file should have columns for
     chemical names and/or CAS Registry Numbers.
     """)
+
+    # Add help section for CSV upload
+    help_info = get_feature_help("csv_upload")
+    show_help_tooltip(help_info["title"], help_info["content"], help_info["icon"])
 
     # File upload section
     col1, col2 = st.columns([2, 1])
@@ -458,8 +504,9 @@ def show_upload_page():
                 # Check file size (10MB limit)
                 file_size = uploaded_file.size
                 if file_size > 10 * 1024 * 1024:  # 10MB in bytes
-                    st.error(
-                        f"❌ File too large ({file_size / 1024 / 1024:.1f}MB). Maximum size is 10MB."
+                    show_error_with_help(
+                        "file_size",
+                        f"File size: {file_size / 1024 / 1024:.1f}MB (max: 10MB)",
                     )
                     return
 
@@ -468,18 +515,16 @@ def show_upload_page():
 
                 # Check if empty
                 if df.empty:
-                    st.error("❌ The uploaded CSV file is empty.")
+                    show_error_with_help("file_empty")
                     return
 
                 # Check batch size limits
                 MAX_BATCH_SIZE = 200  # As per requirements
                 if len(df) > MAX_BATCH_SIZE:
-                    st.error(
-                        f"❌ Dataset too large: {len(df)} rows found, but the maximum allowed is {MAX_BATCH_SIZE} chemicals.\n\n"
-                        f"**Options:**\n"
-                        f"- Split your CSV into smaller batches (max {MAX_BATCH_SIZE} chemicals each)\n"
-                        f"- Use the first {MAX_BATCH_SIZE} rows only (you can do this after column mapping)\n"
-                        f"- Contact support for enterprise batch processing needs"
+                    show_error_with_help(
+                        "batch_too_large",
+                        f"{len(df)} chemicals found (max: {MAX_BATCH_SIZE})",
+                        expand_help=True,
                     )
 
                     # Offer to truncate
@@ -576,6 +621,12 @@ def show_upload_page():
                 # Column mapping
                 st.subheader("Column Mapping")
 
+                # Add help for column mapping
+                help_info = get_feature_help("column_mapping")
+                show_help_tooltip(
+                    help_info["title"], help_info["content"], help_info["icon"]
+                )
+
                 # Auto-detect columns
                 suggested_mapping = cached_suggest_column_mapping(df)
 
@@ -631,9 +682,7 @@ def show_upload_page():
 
                 # Validate that at least one column is selected
                 if name_col == "None" and cas_col == "None":
-                    st.warning(
-                        "⚠️ Please select at least one column (Chemical Name or CAS Number)"
-                    )
+                    show_error_with_help("no_columns_selected")
                 else:
                     # Show selected column preview
                     with st.expander("View Selected Columns", expanded=True):
@@ -647,264 +696,177 @@ def show_upload_page():
                         )
 
                     if st.button("Process Chemicals", type="primary"):
-                        # Create progress indicators
-                        progress_container = st.container()
-                        with progress_container:
-                            progress_bar = st.progress(0)
-                            status_text = st.empty()
+                        # Create progress indicators with cancel option
+                        progress_bar, status_text, cancel_button, progress_container = (
+                            create_progress_with_cancel("Processing chemicals")
+                        )
 
-                            # Create column mapping
-                            column_mapping = CSVColumnMapping(
-                                name_column=name_col if name_col != "None" else None,
-                                cas_column=cas_col if cas_col != "None" else None,
-                            )
+                        # Create column mapping
+                        column_mapping = CSVColumnMapping(
+                            name_column=name_col if name_col != "None" else None,
+                            cas_column=cas_col if cas_col != "None" else None,
+                        )
 
-                            # Process CSV data with progress updates
-                            try:
-                                status_text.text("📋 Validating data structure...")
-                                progress_bar.progress(0.1)
+                        # Process CSV data with progress updates
+                        try:
+                            status_text.text("📋 Validating data structure...")
+                            progress_bar.progress(0.1)
 
-                                # Initial validation and batch size check
-                                MAX_BATCH_SIZE = 200
-                                if len(df) > MAX_BATCH_SIZE:
-                                    st.error(
-                                        f"❌ Cannot process more than {MAX_BATCH_SIZE} chemicals at once."
-                                    )
-                                    progress_container.empty()
-                                    return
-
-                                status_text.text("🔍 Processing chemicals...")
-                                progress_bar.progress(0.3)
-
-                                result = cached_process_csv_data(df, column_mapping)
-
-                                status_text.text("✨ Finalizing results...")
-                                progress_bar.progress(0.9)
-
-                                # Store validated chemicals
-                                st.session_state.chemicals = result.valid_chemicals
-
-                                # Complete progress
-                                progress_bar.progress(1.0)
-                                status_text.text("✅ Processing complete!")
-
-                                # Clear progress indicators after a short delay
-                                import time
-
-                                time.sleep(0.5)
+                            # Check for cancellation
+                            if cancel_button:
+                                st.warning("⏸️ Processing cancelled by user")
                                 progress_container.empty()
+                                return
 
-                                # Display comprehensive results
-                                st.subheader("📊 Processing Summary")
+                            # Initial validation and batch size check
+                            MAX_BATCH_SIZE = 200
+                            if len(df) > MAX_BATCH_SIZE:
+                                show_error_with_help(
+                                    "batch_too_large",
+                                    f"{len(df)} chemicals (max: {MAX_BATCH_SIZE})",
+                                )
+                                progress_container.empty()
+                                return
 
-                                col1, col2, col3, col4 = st.columns(4)
-                                with col1:
-                                    st.metric("Total Rows", result.total_rows)
-                                with col2:
-                                    st.metric(
-                                        "Valid Chemicals",
-                                        len(result.valid_chemicals),
-                                        delta=f"{len(result.valid_chemicals) - len(result.invalid_rows)} processed",
-                                    )
-                                with col3:
-                                    st.metric(
-                                        "Invalid Rows",
-                                        len(result.invalid_rows),
-                                        delta=None
-                                        if len(result.invalid_rows) == 0
-                                        else "-" + str(len(result.invalid_rows)),
-                                    )
-                                with col4:
-                                    st.metric(
-                                        "Success Rate",
-                                        f"{result.success_rate:.1f}%",
-                                        delta="Good"
-                                        if result.success_rate >= 90
-                                        else "Check data",
-                                    )
+                            status_text.text("🔍 Processing chemicals...")
+                            progress_bar.progress(0.3)
 
-                                # Show warnings if any
-                                if result.warnings:
-                                    with st.expander(
-                                        f"⚠️ Warnings ({len(result.warnings)})",
-                                        expanded=False,
-                                    ):
-                                        for warning in result.warnings:
-                                            st.warning(warning)
+                            result = cached_process_csv_data(df, column_mapping)
 
-                                # Show errors if any
-                                if result.invalid_rows:
-                                    with st.expander(
-                                        f"❌ Invalid Rows ({len(result.invalid_rows)})",
-                                        expanded=True,
-                                    ):
-                                        for error in result.invalid_rows:
-                                            st.error(
-                                                f"Row {error['row_number']}: {error['errors']}"
-                                            )
+                            status_text.text("✨ Finalizing results...")
+                            progress_bar.progress(0.9)
 
-                                # Check for duplicates and offer to merge
-                                if result.valid_chemicals:
-                                    duplicates = optimized_detect_duplicates(
-                                        result.valid_chemicals
-                                    )
-                                    if duplicates:
-                                        st.warning(
-                                            f"Found {len(duplicates)} duplicate chemicals."
-                                        )
-                                        if st.checkbox("Merge duplicates?", value=True):
-                                            result.valid_chemicals = merge_duplicates(
-                                                result.valid_chemicals
-                                            )
-                                            st.session_state.chemicals = (
-                                                result.valid_chemicals
-                                            )
-                                            st.info(
-                                                f"Merged to {len(result.valid_chemicals)} unique chemicals."
-                                            )
+                            # Store validated chemicals
+                            st.session_state.chemicals = result.valid_chemicals
 
-                                if result.valid_chemicals:
-                                    st.success(
-                                        f"✅ Successfully processed {len(result.valid_chemicals)} chemicals!"
-                                    )
+                            # Complete progress
+                            progress_bar.progress(1.0)
+                            status_text.text("✅ Processing complete!")
 
-                                    # Show preview of processed chemicals with duplicate highlighting
-                                    with st.expander(
-                                        "Preview Processed Chemicals", expanded=True
-                                    ):
-                                        # Get duplicates for highlighting
-                                        duplicates_list = optimized_detect_duplicates(
-                                            result.valid_chemicals
-                                        )
-                                        duplicate_indices = set()
-                                        for dup1, dup2 in duplicates_list:
-                                            duplicate_indices.add(dup1)
-                                            duplicate_indices.add(dup2)
+                            # Clear progress indicators after a short delay
+                            import time
 
-                                        # Pagination for processed chemicals
-                                        PROCESSED_ROWS_PER_PAGE = 50
-                                        total_processed = len(result.valid_chemicals)
+                            time.sleep(0.5)
+                            progress_container.empty()
 
-                                        if total_processed > PROCESSED_ROWS_PER_PAGE:
-                                            # Calculate total pages
-                                            total_processed_pages = (
-                                                total_processed
-                                                + PROCESSED_ROWS_PER_PAGE
-                                                - 1
-                                            ) // PROCESSED_ROWS_PER_PAGE
+                            # Display comprehensive results
+                            st.subheader("📊 Processing Summary")
 
-                                            # Page selector for processed chemicals
-                                            proc_col1, proc_col2, proc_col3 = (
-                                                st.columns([1, 2, 1])
-                                            )
-                                            with proc_col2:
-                                                processed_page_num = st.selectbox(
-                                                    "Page",
-                                                    options=list(
-                                                        range(
-                                                            1, total_processed_pages + 1
-                                                        )
-                                                    ),
-                                                    format_func=lambda x: f"Page {x} of {total_processed_pages} (chemicals {(x - 1) * PROCESSED_ROWS_PER_PAGE + 1}-{min(x * PROCESSED_ROWS_PER_PAGE, total_processed)})",
-                                                    key="processed_page_selector",
-                                                )
-
-                                            # Calculate indices for current page
-                                            proc_start_idx = (
-                                                processed_page_num - 1
-                                            ) * PROCESSED_ROWS_PER_PAGE
-                                            proc_end_idx = min(
-                                                proc_start_idx
-                                                + PROCESSED_ROWS_PER_PAGE,
-                                                total_processed,
-                                            )
-                                            chemicals_to_show = result.valid_chemicals[
-                                                proc_start_idx:proc_end_idx
-                                            ]
-                                        else:
-                                            chemicals_to_show = result.valid_chemicals
-                                            proc_start_idx = 0
-
-                                        preview_data = []
-                                        for idx, chem in enumerate(chemicals_to_show):
-                                            actual_idx = proc_start_idx + idx
-                                            is_duplicate = (
-                                                actual_idx in duplicate_indices
-                                            )
-                                            preview_data.append(
-                                                {
-                                                    "Index": actual_idx + 1,
-                                                    "Name": chem.name,
-                                                    "CAS Number": chem.cas_number
-                                                    or "N/A",
-                                                    "Validated": "✅"
-                                                    if chem.validated
-                                                    else "⚠️",
-                                                    "Duplicate": "🔁"
-                                                    if is_duplicate
-                                                    else "",
-                                                    "Synonyms": ", ".join(
-                                                        chem.synonyms[:3]
-                                                    )
-                                                    + (
-                                                        "..."
-                                                        if len(chem.synonyms) > 3
-                                                        else ""
-                                                    )
-                                                    if chem.synonyms
-                                                    else "N/A",
-                                                }
-                                            )
-                                        preview_df = pd.DataFrame(preview_data)
-
-                                        # Apply custom styling to highlight duplicates
-                                        st.dataframe(
-                                            preview_df,
-                                            use_container_width=True,
-                                            height=400,
-                                            hide_index=True,
-                                            column_config={
-                                                "Index": st.column_config.NumberColumn(
-                                                    "Index",
-                                                    help="Row number in the dataset",
-                                                    width="small",
-                                                ),
-                                                "Duplicate": st.column_config.TextColumn(
-                                                    "Dup",
-                                                    help="🔁 indicates duplicate entry",
-                                                    width="small",
-                                                ),
-                                                "Validated": st.column_config.TextColumn(
-                                                    "Valid",
-                                                    help="✅ = Valid CAS, ⚠️ = Invalid/No CAS",
-                                                    width="small",
-                                                ),
-                                            },
-                                        )
-
-                                        if total_processed > PROCESSED_ROWS_PER_PAGE:
-                                            st.info(
-                                                f"Showing chemicals {proc_start_idx + 1}-{proc_end_idx} of {total_processed}"
-                                            )
-
-                                    st.balloons()
-                                else:
-                                    st.error(
-                                        "No valid chemicals found in the uploaded file."
-                                    )
-
-                            except Exception as e:
-                                st.error(f"Error processing CSV: {str(e)}")
-                                logger.error(
-                                    f"CSV processing error: {e}", exc_info=True
+                            col1, col2, col3, col4 = st.columns(4)
+                            with col1:
+                                st.metric("Total Rows", result.total_rows)
+                            with col2:
+                                st.metric(
+                                    "Valid Chemicals",
+                                    len(result.valid_chemicals),
+                                    delta=f"{len(result.valid_chemicals) - len(result.invalid_rows)} processed",
+                                )
+                            with col3:
+                                st.metric(
+                                    "Invalid Rows",
+                                    len(result.invalid_rows),
+                                    delta=None
+                                    if len(result.invalid_rows) == 0
+                                    else "-" + str(len(result.invalid_rows)),
+                                )
+                            with col4:
+                                st.metric(
+                                    "Success Rate",
+                                    f"{result.success_rate:.1f}%",
+                                    delta="Good"
+                                    if result.success_rate >= 90
+                                    else "Check data",
                                 )
 
+                            # Show warnings if any
+                            if result.warnings:
+                                with st.expander(
+                                    f"⚠️ Warnings ({len(result.warnings)})",
+                                    expanded=False,
+                                ):
+                                    for warning in result.warnings:
+                                        st.warning(warning)
+
+                            # Show errors if any with enhanced help
+                            if result.invalid_rows:
+                                show_validation_help(result.invalid_rows, expand=True)
+
+                            # Check for duplicates and offer to merge
+                            if result.valid_chemicals:
+                                duplicates = detect_duplicates(result.valid_chemicals)
+                                if duplicates:
+                                    st.warning(
+                                        f"Found {len(duplicates)} duplicate chemicals."
+                                    )
+                                    if st.checkbox("Merge duplicates?", value=True):
+                                        result.valid_chemicals = merge_duplicates(
+                                            result.valid_chemicals
+                                        )
+                                        st.session_state.chemicals = (
+                                            result.valid_chemicals
+                                        )
+                                        st.info(
+                                            f"Merged to {len(result.valid_chemicals)} unique chemicals."
+                                        )
+
+                            if result.valid_chemicals:
+                                # Use the new success with stats function
+                                stats = {
+                                    "Valid Chemicals": len(result.valid_chemicals),
+                                    "Success Rate": f"{result.success_rate:.1f}%",
+                                    "Invalid Rows": len(result.invalid_rows),
+                                }
+                                show_success_with_stats(
+                                    f"Successfully processed {len(result.valid_chemicals)} chemicals!",
+                                    stats,
+                                )
+
+                                # Show simplified preview of processed chemicals
+                                with st.expander(
+                                    "Preview Processed Chemicals", expanded=True
+                                ):
+                                    # Show first 10 chemicals in a simple table
+                                    preview_chemicals = result.valid_chemicals[:10]
+                                    preview_data = []
+                                    for i, chem in enumerate(preview_chemicals):
+                                        preview_data.append(
+                                            {
+                                                "Chemical Name": chem.name,
+                                                "CAS Number": chem.cas_number or "N/A",
+                                                "Validated": "✅"
+                                                if chem.validated
+                                                else "⚠️",
+                                                "Synonyms": len(chem.synonyms)
+                                                if chem.synonyms
+                                                else 0,
+                                            }
+                                        )
+
+                                    if preview_data:
+                                        st.dataframe(
+                                            pd.DataFrame(preview_data),
+                                            use_container_width=True,
+                                        )
+
+                                        if len(result.valid_chemicals) > 10:
+                                            st.info(
+                                                f"Showing first 10 of {len(result.valid_chemicals)} chemicals"
+                                            )
+                            else:
+                                st.error(
+                                    "No valid chemicals found in the uploaded file."
+                                )
+
+                        except Exception as e:
+                            show_error_with_help("processing_failed", str(e))
+                            log_error_for_support(e, "CSV processing")
+
             except pd.errors.EmptyDataError:
-                st.error("❌ The uploaded file appears to be empty or invalid.")
-                logger.error("Empty CSV file uploaded")
+                show_error_with_help("file_empty")
+                log_error_for_support(Exception("Empty CSV file"), "file upload")
             except Exception as e:
-                st.error(f"❌ Error reading file: {str(e)}")
-                logger.error(f"File upload error: {str(e)}")
+                show_error_with_help("invalid_csv", str(e))
+                log_error_for_support(e, "file upload")
 
     with col2:
         st.markdown("### 📋 File Requirements")
@@ -970,6 +932,10 @@ def show_search_page():
     with col1:
         st.subheader("Search Parameters")
 
+        # Add help for search settings
+        help_info = get_feature_help("search_settings")
+        show_help_tooltip(help_info["title"], help_info["content"], help_info["icon"])
+
         _date_range = st.slider(
             "Publication Date Range (years)",
             min_value=1,
@@ -1001,6 +967,10 @@ def show_search_page():
 
     with col2:
         st.subheader("Batch Information")
+
+        # Add help for batch processing
+        help_info = get_feature_help("batch_processing")
+        show_help_tooltip(help_info["title"], help_info["content"], help_info["icon"])
         chemical_count = len(st.session_state.chemicals)
         MAX_BATCH_SIZE = 200
 
@@ -1038,33 +1008,59 @@ def show_search_page():
 
     with col1:
         if st.button("🚀 Start Search", type="primary", use_container_width=True):
+            import time  # For search timing simulation
+
             st.session_state.current_batch_id = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-            # Progress tracking
-            progress_bar = st.progress(0)
-            status_text = st.empty()
-            _results_container = st.container()
+            # Enhanced loading states with realistic search simulation
+            with st.spinner("Initializing search..."):
+                time.sleep(1)  # Simulate initialization
 
-            # TODO: Implement actual search logic
-            # TODO: Use _results_container for displaying results
-            import time
+            # Create progress with cancel functionality
+            progress_bar, status_text, cancel_button, progress_container = (
+                create_progress_with_cancel("Searching chemicals")
+            )
 
-            for i, chemical in enumerate(
-                st.session_state.chemicals[:5]
-            ):  # Demo with first 5
-                progress = (i + 1) / len(st.session_state.chemicals)
+            # Realistic search simulation
+            chemicals_to_search = st.session_state.chemicals[
+                : min(5, len(st.session_state.chemicals))
+            ]  # Demo with first 5
+
+            for i, chemical in enumerate(chemicals_to_search):
+                if cancel_button:
+                    st.warning("⏸️ Search cancelled by user")
+                    break
+
+                # Show current chemical being searched
+                progress = (i + 1) / len(chemicals_to_search)
                 progress_bar.progress(progress)
-                status_text.text(
-                    f"Searching for chemical {i + 1} of {len(st.session_state.chemicals)}..."
-                )
-                time.sleep(0.5)  # Simulate API call
+                status_text.text(f"🔍 Searching PubMed for: {chemical.name}")
+
+                # Simulate API call with realistic timing
+                time.sleep(0.8)
+
+                # Show intermediate steps
+                status_text.text(f"📄 Found papers for: {chemical.name}")
+                time.sleep(0.3)
+
+                status_text.text(f"⚖️ Scoring results for: {chemical.name}")
+                time.sleep(0.4)
 
             progress_bar.progress(1.0)
-            status_text.text("Search complete!")
-            st.success(
-                f"✅ Batch search completed! Batch ID: {st.session_state.current_batch_id}"
+            status_text.text("✅ Search complete!")
+            time.sleep(0.5)
+            progress_container.empty()
+
+            # Show completion message with stats
+            stats = {
+                "Chemicals Searched": len(chemicals_to_search),
+                "Papers Found": len(chemicals_to_search) * 25,  # Simulate results
+                "Time Taken": f"{len(chemicals_to_search) * 1.5:.1f}s",
+            }
+            show_success_with_stats(
+                f"Batch search completed! Batch ID: {st.session_state.current_batch_id}",
+                stats,
             )
-            st.balloons()
 
     with col2:
         if st.button("⏸️ Pause Search", use_container_width=True):
@@ -1196,23 +1192,59 @@ def show_export_page():
 
     st.markdown("---")
 
-    # Export button
+    # Export button with enhanced loading states
     if st.button("📥 Generate Export", type="primary"):
-        with st.spinner("Generating export file..."):
-            # TODO: Implement actual export logic
-            import time
+        import time  # For export timing simulation
 
-            time.sleep(2)  # Simulate export generation
+        # Create progress indicators for export
+        progress_bar, status_text, cancel_button, progress_container = (
+            create_progress_with_cancel("Generating export")
+        )
 
-            st.success("✅ Export file generated successfully!")
+        try:
+            # Simulate export steps with progress
+            status_text.text("📊 Collecting search results...")
+            progress_bar.progress(0.2)
+            time.sleep(0.5)
+
+            if cancel_button:
+                st.warning("⏸️ Export cancelled by user")
+                progress_container.empty()
+                return
+
+            status_text.text("📋 Formatting data...")
+            progress_bar.progress(0.5)
+            time.sleep(0.8)
+
+            status_text.text("📄 Creating spreadsheet...")
+            progress_bar.progress(0.8)
+            time.sleep(0.7)
+
+            status_text.text("✅ Export ready!")
+            progress_bar.progress(1.0)
+            time.sleep(0.3)
+            progress_container.empty()
+
+            # Show success with file info
+            stats = {
+                "File Size": "245 KB",
+                "Chemicals": len(st.session_state.chemicals),
+                "Format": "Excel (.xlsx)",
+            }
+            show_success_with_stats(
+                "Export file generated successfully!", stats, show_balloons=False
+            )
 
             # TODO: Provide actual download button
             st.download_button(
                 label="📥 Download Export",
                 data="Sample export data",  # TODO: Use actual export data
-                file_name=f"chemscreen_export_{st.session_state.current_batch_id}.csv",
-                mime="text/csv",
+                file_name=f"chemscreen_export_{st.session_state.current_batch_id}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             )
+        except Exception as e:
+            show_error_with_help("processing_failed", str(e))
+            log_error_for_support(e, "export generation")
 
 
 def show_history_page():
