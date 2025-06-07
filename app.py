@@ -28,6 +28,7 @@ from chemscreen.cached_processors import (
 from chemscreen.pubmed import batch_search
 from chemscreen.analyzer import calculate_quality_metrics
 from chemscreen.exporter import ExportManager
+from chemscreen.session_manager import SessionManager
 from chemscreen.errors import (
     show_error_with_help,
     show_validation_help,
@@ -1081,6 +1082,37 @@ def show_search_page():
                 # Store results in session state
                 st.session_state.search_results = search_results
 
+                # Save session for persistence and history
+                try:
+                    session_manager = SessionManager()
+
+                    # Create search parameters object
+                    search_params = SearchParameters(
+                        date_range_years=date_range_years,
+                        max_results=max_results,
+                        include_reviews=include_reviews,
+                    )
+
+                    # Create BatchSearchSession object
+                    session = BatchSearchSession(
+                        batch_id=st.session_state.current_batch_id,
+                        chemicals=chemicals_to_search,
+                        parameters=search_params,
+                        results={
+                            result.chemical.name: result for result in search_results
+                        },
+                        status="completed",
+                    )
+
+                    # Save session
+                    session_filepath = session_manager.save_session(session)
+                    st.session_state.current_session = session
+                    logger.info(f"Session saved to {session_filepath}")
+
+                except Exception as e:
+                    logger.error(f"Failed to save session: {e}")
+                    # Don't fail the search if session saving fails
+
                 # Calculate real stats
                 total_papers = sum(
                     len(result.publications) for result in search_results
@@ -1489,29 +1521,65 @@ def show_history_page():
 
     st.markdown("View and manage your previous search sessions.")
 
-    # TODO: Implement actual history tracking
-    history_data = [
-        {
-            "Batch ID": "20250106_143022",
-            "Date": "2025-01-06 14:30:22",
-            "Chemicals": 75,
-            "Status": "✅ Complete",
-            "Results": 73,
-            "Export": "📥 Available",
-        },
-        {
-            "Batch ID": "20250105_093015",
-            "Date": "2025-01-05 09:30:15",
-            "Chemicals": 120,
-            "Status": "✅ Complete",
-            "Results": 118,
-            "Export": "📥 Available",
-        },
-    ]
+    # Initialize session manager
+    session_manager = SessionManager()
+
+    # Get session list
+    sessions = session_manager.list_sessions()
+
+    if not sessions:
+        st.info(
+            "No search history available. Run a search to create your first session."
+        )
+        return
+
+    # Session management controls
+    col1, col2, col3 = st.columns([2, 1, 1])
+
+    with col1:
+        st.subheader(f"Found {len(sessions)} Sessions")
+
+    with col2:
+        if st.button("🧹 Cleanup Old Sessions"):
+            deleted_count = session_manager.cleanup_old_sessions(days_to_keep=30)
+            if deleted_count > 0:
+                st.success(f"Deleted {deleted_count} old sessions")
+                st.rerun()
+            else:
+                st.info("No old sessions to clean up")
+
+    with col3:
+        if st.button("🔄 Refresh"):
+            st.rerun()
+
+    # Convert sessions to DataFrame for display
+    history_data = []
+    for session_meta in sessions:
+        try:
+            created_at = datetime.fromisoformat(session_meta["created_at"])
+            history_data.append(
+                {
+                    "Batch ID": session_meta["session_id"],
+                    "Date": created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                    "Chemicals": session_meta["chemical_count"],
+                    "Status": "✅ Complete"
+                    if session_meta.get("status") == "completed"
+                    else "⚠️ Partial",
+                    "Results": session_meta.get("result_count", 0),
+                    "Session Name": session_meta.get("session_name", "Unnamed Session"),
+                }
+            )
+        except Exception as e:
+            logger.error(f"Error processing session metadata: {e}")
+            continue
+
+    if not history_data:
+        st.warning("No valid sessions found in history.")
+        return
 
     history_df = pd.DataFrame(history_data)
 
-    # Display history table
+    # Display history table with actions
     st.dataframe(
         history_df,
         use_container_width=True,
@@ -1523,21 +1591,77 @@ def show_history_page():
         },
     )
 
-    # Action buttons
-    col1, col2, col3 = st.columns(3)
+    # Session actions
+    st.markdown("---")
+    st.subheader("Session Actions")
 
-    with col1:
-        if st.button("🔄 Reload Selected"):
-            st.info("Session reload functionality coming soon")
+    # Session selection for actions
+    selected_session_id = st.selectbox(
+        "Select Session",
+        options=[session["session_id"] for session in sessions],
+        format_func=lambda x: f"{x} - {next((s['session_name'] or 'Unnamed') for s in sessions if s['session_id'] == x)}",
+    )
 
-    with col2:
-        if st.button("📊 Compare Sessions"):
-            st.info("Session comparison functionality coming soon")
+    if selected_session_id:
+        col1, col2, col3 = st.columns(3)
 
-    with col3:
-        if st.button("🗑️ Clear History"):
-            if st.checkbox("Confirm deletion"):
-                st.warning("History cleared!")
+        with col1:
+            if st.button("📂 Load Session", type="primary"):
+                # Load session and set as current
+                loaded_session = session_manager.load_session(selected_session_id)
+                if loaded_session:
+                    st.session_state.current_session = loaded_session
+                    st.session_state.chemicals = loaded_session.chemicals
+                    st.session_state.search_results = list(
+                        loaded_session.results.values()
+                    )
+                    st.session_state.current_batch_id = loaded_session.batch_id
+
+                    # Update search parameters in session state
+                    st.session_state.date_range = (
+                        loaded_session.parameters.date_range_years
+                    )
+                    st.session_state.max_results = loaded_session.parameters.max_results
+                    st.session_state.include_reviews = (
+                        loaded_session.parameters.include_reviews
+                    )
+
+                    st.success(f"Session {selected_session_id} loaded successfully!")
+                    st.info(
+                        "Session data has been restored. Navigate to Results or Export pages to view the data."
+                    )
+                else:
+                    st.error(f"Failed to load session {selected_session_id}")
+
+        with col2:
+            if st.button("🗑️ Delete Session"):
+                if session_manager.delete_session(selected_session_id):
+                    st.success(f"Session {selected_session_id} deleted")
+                    st.rerun()
+                else:
+                    st.error(f"Failed to delete session {selected_session_id}")
+
+        with col3:
+            if st.button("📋 View Details"):
+                # Show session details
+                session_details = session_manager.load_session(selected_session_id)
+                if session_details:
+                    st.json(
+                        {
+                            "Batch ID": session_details.batch_id,
+                            "Created": session_details.created_at.isoformat(),
+                            "Chemicals": len(session_details.chemicals),
+                            "Results": len(session_details.results),
+                            "Status": session_details.status,
+                            "Parameters": {
+                                "Date Range": f"{session_details.parameters.date_range_years} years",
+                                "Max Results": session_details.parameters.max_results,
+                                "Include Reviews": session_details.parameters.include_reviews,
+                            },
+                        }
+                    )
+                else:
+                    st.error("Failed to load session details")
 
 
 # Main application
