@@ -7,11 +7,13 @@ This guide helps librarians test ChemScreen to ensure it meets the needs of regu
 ## Getting Started
 
 ### System Requirements
+
 - Modern web browser (Chrome, Firefox, Safari, Edge)
 - Internet connection for PubMed searches
 - No software installation required
 
 ### Accessing ChemScreen
+
 1. Open your web browser
 2. Navigate to the ChemScreen application URL
 3. You should see the main interface with upload area
@@ -209,16 +211,19 @@ Use a real list of 20-30 chemicals from current work (remove sensitive informati
 ## Common Issues and Solutions
 
 ### Upload Problems
+
 - **Issue**: CSV file won't upload
 - **Solution**: Check file format, ensure UTF-8 encoding
 - **Workaround**: Try saving from Excel as "CSV (Comma delimited)"
 
 ### Slow Performance
+
 - **Issue**: Searches taking too long
 - **Solution**: Try smaller batches (25-50 chemicals)
 - **Workaround**: Run searches during off-peak hours
 
 ### Missing Results
+
 - **Issue**: Some chemicals return no results
 - **Reasons**:
   - Very new or obscure chemicals
@@ -227,6 +232,7 @@ Use a real list of 20-30 chemicals from current work (remove sensitive informati
 - **Solution**: Try alternative chemical names or synonyms
 
 ### Export Issues
+
 - **Issue**: Excel file won't open properly
 - **Solution**: Ensure Excel can handle .xlsx format
 - **Workaround**: Use CSV export if Excel export fails
@@ -234,18 +240,21 @@ Use a real list of 20-30 chemicals from current work (remove sensitive informati
 ## Feedback Collection
 
 ### Critical Issues (Must Fix)
+
 List any issues that prevent effective use:
 1. ____________________
 2. ____________________
 3. ____________________
 
 ### Important Improvements (Should Fix)
+
 List issues that reduce efficiency:
 1. ____________________
 2. ____________________
 3. ____________________
 
 ### Nice-to-Have Features (Could Add)
+
 List features that would enhance workflow:
 1. ____________________
 2. ____________________
@@ -333,6 +342,7 @@ Ensure documentation supports:
 - [ ] Follow-up recommendations
 
 ### For Regulatory Submissions
+
 Check that data can support:
 - [ ] Literature search documentation
 - [ ] Systematic review protocols

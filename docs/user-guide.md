@@ -7,11 +7,13 @@ ChemScreen is a powerful tool designed to help librarians and regulatory profess
 ## Quick Start
 
 ### What You Need
+
 - A CSV file with your chemical names and CAS numbers
 - 5-10 minutes to upload and configure your search
 - An internet connection for PubMed searches
 
 ### Basic Workflow
+
 1. **Upload** your chemical list
 2. **Configure** search parameters
 3. **Start** the automated search
@@ -23,6 +25,7 @@ Let's walk through each step in detail.
 ## Step 1: Preparing Your Chemical List
 
 ### File Format
+
 ChemScreen accepts CSV (comma-separated values) files with the following format:
 
 ```csv
@@ -34,6 +37,7 @@ Benzene,71-43-2
 ```
 
 ### Required Information
+
 - **Chemical Name** (required): Common name, IUPAC name, or trade name
 - **CAS Number** (optional but recommended): Chemical Abstracts Service registry number
 
@@ -57,6 +61,7 @@ Benzene,71-43-2
 - ❌ Don't include extra columns (ChemScreen uses first two columns only)
 
 ### File Size Limits
+
 - **Maximum file size**: 10 MB
 - **Recommended batch size**: 25-100 chemicals
 - **For larger lists**: Split into multiple files for better performance
@@ -64,10 +69,12 @@ Benzene,71-43-2
 ## Step 2: Uploading Your File
 
 ### Upload Process
+
 1. **Drag and drop** your CSV file onto the upload area, or
 2. **Click "Browse files"** to select your file
 
 ### File Preview
+
 After uploading, ChemScreen will show you a preview of your chemicals:
 - **Chemical names** as they will be searched
 - **CAS numbers** (if provided)
@@ -75,15 +82,18 @@ After uploading, ChemScreen will show you a preview of your chemicals:
 
 ### Common Upload Issues
 
-**"File format not supported"**
+#### File format not supported
+
 - Ensure your file is saved as .csv format
 - Try re-saving from Excel as "CSV (Comma delimited)"
 
-**"File too large"**
+#### File too large
+
 - Split large lists into smaller batches (50-100 chemicals per file)
 - Remove unnecessary columns
 
-**"No chemicals detected"**
+#### No chemicals detected
+
 - Check that your first row contains headers
 - Ensure chemical names are in the first column
 
@@ -128,11 +138,13 @@ Click "Advanced Options" to access additional settings:
 ## Step 4: Running Your Search
 
 ### Starting the Search
+
 1. Review your uploaded chemicals in the preview
 2. Adjust search parameters if needed
 3. Click **"Start Literature Search"**
 
 ### Monitoring Progress
+
 ChemScreen will show real-time progress:
 - **Progress bar**: Overall completion percentage
 - **Current chemical**: Which chemical is being searched
@@ -140,13 +152,16 @@ ChemScreen will show real-time progress:
 - **Time estimate**: Approximate time remaining
 
 ### What Happens During Search
+
 For each chemical, ChemScreen:
+
 1. Builds optimized PubMed search queries
 2. Retrieves publication lists from PubMed
 3. Calculates quality scores and metrics
 4. Caches results for future use
 
 ### Expected Timing
+
 - **10 chemicals**: 2-5 minutes
 - **50 chemicals**: 10-20 minutes
 - **100 chemicals**: 20-40 minutes
@@ -198,12 +213,14 @@ After completion, you'll see a summary table with:
 
 ### Sorting and Filtering Results
 
-**Sort by**:
+#### Sort by
+
 - **Quality Score**: Prioritize chemicals with strong literature
 - **Publication Count**: Focus on well-studied chemicals
 - **Recent Activity**: Identify chemicals with new research
 
-**Filter by**:
+#### Filter by
+
 - **Quality threshold**: Show only high-quality results
 - **Publication count**: Focus on chemicals above/below certain thresholds
 - **Error status**: Review chemicals that had search issues
@@ -221,20 +238,23 @@ Click on any chemical name to see detailed information:
 
 ### Export Formats
 
-**Excel (.xlsx) - Recommended**
+#### Excel (.xlsx) - Recommended
+
 - Multiple worksheets with organized data
 - Summary sheet with key metrics
 - Detailed results with full publication information
 - Search metadata and parameters
 - Formatted for easy analysis
 
-**CSV (.csv)**
+#### CSV (.csv)
+
 - Single file with all results
 - Easy to import into other tools
 - Good for further data analysis
 - Compatible with all spreadsheet software
 
-**JSON (.json)**
+#### JSON (.json)
+
 - Complete data in structured format
 - Suitable for technical users
 - Preserves all search metadata
@@ -252,14 +272,16 @@ Click on any chemical name to see detailed information:
 
 ### Using Your Exported Data
 
-**Excel Workflow**:
+#### Excel Workflow
+
 1. Open the exported Excel file
 2. **Summary sheet**: Overview of all chemicals with key metrics
 3. **Detailed Results**: Complete publication data
 4. **Search Metadata**: Parameters used and search information
 5. Add your own columns for notes, priority levels, or assessment status
 
-**Integration with Other Tools**:
+#### Integration with Other Tools
+
 - Import CSV data into regulatory databases
 - Copy publication lists into reference managers
 - Use PMIDs to download full-text articles
@@ -274,36 +296,42 @@ Click on any chemical name to see detailed information:
 
 ### Session Management
 
-**Session History**:
+#### Session History
+
 - View previous searches
 - Resume interrupted sessions
 - Compare results across different parameters
 
-**Session Recovery**:
+#### Session Recovery
+
 - If your browser closes, return to see previous results
 - Sessions automatically saved during processing
 - Can export results from previous sessions
 
 ### Batch Management
 
-**Multiple Batches**:
+#### Multiple Batches
+
 - Process multiple chemical lists separately
 - Compare results across different chemical sets
 - Maintain separate projects or assessments
 
-**Optimal Batch Sizes**:
+#### Optimal Batch Sizes
+
 - **Small batches (10-25)**: Quick testing or high-priority chemicals
 - **Medium batches (25-75)**: Typical regulatory screening
 - **Large batches (75-200)**: Comprehensive assessments
 
 ### Cache Benefits
 
-**Speed Improvements**:
+#### Speed Improvements
+
 - Repeat searches are nearly instantaneous
 - Useful for testing different parameters
 - Shared cache benefits team members
 
-**Cache Management**:
+#### Cache Management
+
 - Automatically cleans old entries
 - No action needed from users
 - Can be manually cleared if needed
@@ -311,21 +339,25 @@ Click on any chemical name to see detailed information:
 ## Regulatory Applications
 
 ### TSCA Screening
-**Typical Workflow**:
+
+#### Typical Workflow
+
 1. Upload PMN chemical list
 2. Use 10-year search range
 3. Include reviews for comprehensive coverage
 4. Focus on toxicology and environmental fate literature
 5. Export for risk assessment documentation
 
-**Key Metrics to Review**:
+#### Key Metrics to Review
+
 - Recent toxicology studies
 - Environmental fate and transport data
 - Exposure assessment information
 - Ecological effects literature
 
 ### REACH Assessment
-**Typical Workflow**:
+
+#### Typical Workflow
 1. Upload SVHC candidate list
 2. Use 5-year search for recent activity
 3. Include reviews for regulatory summaries
@@ -415,19 +447,22 @@ Click on any chemical name to see detailed information:
 - Verify CAS number if provided
 - Consider that some chemicals may have limited literature
 
-**Low Quality Scores**:
+#### Low Quality Scores
+
 - Normal for new or specialty chemicals
 - Consider broadening search parameters
 - May require manual literature searching
 - Check for alternative chemical names
 
-**Slow Performance**:
+#### Slow Performance
+
 - Reduce batch size (try 25-50 chemicals)
 - Check internet connection
 - Process during off-peak hours
 - Contact support if consistently slow
 
-**Export Issues**:
+#### Export Issues
+
 - Ensure browser allows downloads
 - Check available disk space
 - Try alternative export format (CSV vs Excel)
@@ -435,17 +470,20 @@ Click on any chemical name to see detailed information:
 
 ### Getting Help
 
-**Built-in Help**:
+#### Built-in Help
+
 - Hover over question marks (?) for field explanations
 - Check status messages during processing
 - Review error messages for specific guidance
 
-**Documentation**:
+#### Documentation
+
 - This user guide covers most common scenarios
 - Check FAQ section for additional tips
 - Review example workflows for your field
 
-**Technical Support**:
+#### Technical Support
+
 - Use the feedback button to report issues
 - Include error messages and browser information
 - Describe your workflow and expected results

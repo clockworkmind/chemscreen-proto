@@ -123,12 +123,12 @@ class TestPerformanceBaselines:
         assert len(result.valid_chemicals) == 10
 
         # Performance assertions
-        assert (
-            metrics["execution_time_seconds"] < 1.0
-        ), f"CSV processing took {metrics['execution_time_seconds']:.2f}s (expected <1.0s)"
-        assert (
-            metrics["memory_delta_mb"] < 10
-        ), f"Memory delta {metrics['memory_delta_mb']:.1f}MB (expected <10MB)"
+        assert metrics["execution_time_seconds"] < 1.0, (
+            f"CSV processing took {metrics['execution_time_seconds']:.2f}s (expected <1.0s)"
+        )
+        assert metrics["memory_delta_mb"] < 10, (
+            f"Memory delta {metrics['memory_delta_mb']:.1f}MB (expected <10MB)"
+        )
 
         print("\n📊 CSV Processing (10 chemicals):")
         print(f"   ⏱️  Time: {metrics['execution_time_seconds']:.3f}s")
@@ -151,12 +151,12 @@ class TestPerformanceBaselines:
         metrics = performance_monitor.stop()
 
         assert len(result.valid_chemicals) == 50
-        assert (
-            metrics["execution_time_seconds"] < 2.0
-        ), f"CSV processing took {metrics['execution_time_seconds']:.2f}s (expected <2.0s)"
-        assert (
-            metrics["memory_delta_mb"] < 25
-        ), f"Memory delta {metrics['memory_delta_mb']:.1f}MB (expected <25MB)"
+        assert metrics["execution_time_seconds"] < 2.0, (
+            f"CSV processing took {metrics['execution_time_seconds']:.2f}s (expected <2.0s)"
+        )
+        assert metrics["memory_delta_mb"] < 25, (
+            f"Memory delta {metrics['memory_delta_mb']:.1f}MB (expected <25MB)"
+        )
 
         print("\n📊 CSV Processing (50 chemicals):")
         print(f"   ⏱️  Time: {metrics['execution_time_seconds']:.3f}s")
@@ -179,12 +179,12 @@ class TestPerformanceBaselines:
         metrics = performance_monitor.stop()
 
         assert len(result.valid_chemicals) == 100
-        assert (
-            metrics["execution_time_seconds"] < 5.0
-        ), f"CSV processing took {metrics['execution_time_seconds']:.2f}s (expected <5.0s)"
-        assert (
-            metrics["memory_delta_mb"] < 50
-        ), f"Memory delta {metrics['memory_delta_mb']:.1f}MB (expected <50MB)"
+        assert metrics["execution_time_seconds"] < 5.0, (
+            f"CSV processing took {metrics['execution_time_seconds']:.2f}s (expected <5.0s)"
+        )
+        assert metrics["memory_delta_mb"] < 50, (
+            f"Memory delta {metrics['memory_delta_mb']:.1f}MB (expected <50MB)"
+        )
 
         print("\n📊 CSV Processing (100 chemicals):")
         print(f"   ⏱️  Time: {metrics['execution_time_seconds']:.3f}s")
@@ -223,9 +223,9 @@ class TestPerformanceBaselines:
         perf_metrics = performance_monitor.stop()
 
         assert len(results_with_metrics) == 50
-        assert (
-            perf_metrics["execution_time_seconds"] < 1.0
-        ), f"Quality analysis took {perf_metrics['execution_time_seconds']:.2f}s (expected <1.0s)"
+        assert perf_metrics["execution_time_seconds"] < 1.0, (
+            f"Quality analysis took {perf_metrics['execution_time_seconds']:.2f}s (expected <1.0s)"
+        )
 
         print("\n📊 Quality Analysis (50 chemicals):")
         print(f"   ⏱️  Time: {perf_metrics['execution_time_seconds']:.3f}s")
@@ -282,12 +282,12 @@ class TestPerformanceBaselines:
         retrieve_metrics = performance_monitor.stop()
 
         assert retrieved_count == 20
-        assert (
-            save_metrics["execution_time_seconds"] < 2.0
-        ), f"Cache save took {save_metrics['execution_time_seconds']:.2f}s (expected <2.0s)"
-        assert (
-            retrieve_metrics["execution_time_seconds"] < 1.0
-        ), f"Cache retrieve took {retrieve_metrics['execution_time_seconds']:.2f}s (expected <1.0s)"
+        assert save_metrics["execution_time_seconds"] < 2.0, (
+            f"Cache save took {save_metrics['execution_time_seconds']:.2f}s (expected <2.0s)"
+        )
+        assert retrieve_metrics["execution_time_seconds"] < 1.0, (
+            f"Cache retrieve took {retrieve_metrics['execution_time_seconds']:.2f}s (expected <1.0s)"
+        )
 
         print("\n📊 Cache Operations (20 items):")
         print(f"   ⏱️  Save: {save_metrics['execution_time_seconds']:.3f}s")
@@ -343,9 +343,9 @@ class TestPerformanceBaselines:
 
         assert csv_path.exists()
         assert csv_path.stat().st_size > 0
-        assert (
-            metrics["execution_time_seconds"] < 5.0
-        ), f"CSV export took {metrics['execution_time_seconds']:.2f}s (expected <5.0s)"
+        assert metrics["execution_time_seconds"] < 5.0, (
+            f"CSV export took {metrics['execution_time_seconds']:.2f}s (expected <5.0s)"
+        )
 
         print("\n📊 CSV Export (50 chemicals):")
         print(f"   ⏱️  Time: {metrics['execution_time_seconds']:.3f}s")
@@ -399,9 +399,9 @@ class TestPerformanceBaselines:
         if excel_path:  # Only test if Excel export is available
             assert excel_path.exists()
             assert excel_path.stat().st_size > 0
-            assert (
-                metrics["execution_time_seconds"] < 10.0
-            ), f"Excel export took {metrics['execution_time_seconds']:.2f}s (expected <10.0s)"
+            assert metrics["execution_time_seconds"] < 10.0, (
+                f"Excel export took {metrics['execution_time_seconds']:.2f}s (expected <10.0s)"
+            )
 
             print("\n📊 Excel Export (25 chemicals):")
             print(f"   ⏱️  Time: {metrics['execution_time_seconds']:.3f}s")
@@ -450,12 +450,12 @@ class TestPerformanceBaselines:
         load_metrics = performance_monitor.stop()
 
         assert len(loaded_sessions) == 10
-        assert (
-            save_metrics["execution_time_seconds"] < 3.0
-        ), f"Session save took {save_metrics['execution_time_seconds']:.2f}s (expected <3.0s)"
-        assert (
-            load_metrics["execution_time_seconds"] < 2.0
-        ), f"Session load took {load_metrics['execution_time_seconds']:.2f}s (expected <2.0s)"
+        assert save_metrics["execution_time_seconds"] < 3.0, (
+            f"Session save took {save_metrics['execution_time_seconds']:.2f}s (expected <3.0s)"
+        )
+        assert load_metrics["execution_time_seconds"] < 2.0, (
+            f"Session load took {load_metrics['execution_time_seconds']:.2f}s (expected <2.0s)"
+        )
 
         print("\n📊 Session Management (10 sessions):")
         print(f"   ⏱️  Save: {save_metrics['execution_time_seconds']:.3f}s")
@@ -518,12 +518,12 @@ class TestPerformanceBaselines:
         metrics = performance_monitor.stop()
 
         assert len(result.valid_chemicals) == 200
-        assert (
-            metrics["memory_usage_mb"] < 512
-        ), f"Memory usage {metrics['memory_usage_mb']:.1f}MB (expected <512MB)"
-        assert (
-            metrics["execution_time_seconds"] < 30.0
-        ), f"Full processing took {metrics['execution_time_seconds']:.2f}s (expected <30.0s)"
+        assert metrics["memory_usage_mb"] < 512, (
+            f"Memory usage {metrics['memory_usage_mb']:.1f}MB (expected <512MB)"
+        )
+        assert metrics["execution_time_seconds"] < 30.0, (
+            f"Full processing took {metrics['execution_time_seconds']:.2f}s (expected <30.0s)"
+        )
 
         print("\n📊 Memory Usage Test (200 chemicals):")
         print(f"   ⏱️  Time: {metrics['execution_time_seconds']:.3f}s")
@@ -587,9 +587,9 @@ class TestPerformanceRegression:
         final_memory = process.memory_info().rss / 1024 / 1024
         memory_growth = final_memory - baseline_memory
 
-        assert (
-            memory_growth < 50
-        ), f"Memory grew by {memory_growth:.1f}MB (expected <50MB)"
+        assert memory_growth < 50, (
+            f"Memory grew by {memory_growth:.1f}MB (expected <50MB)"
+        )
 
         print("\n📊 Memory Leak Test:")
         print(f"   📊 Baseline: {baseline_memory:.1f}MB")
@@ -660,12 +660,12 @@ class TestPerformanceRegression:
         total_time = end_time - start_time
         memory_usage = end_memory - start_memory
 
-        assert (
-            total_time < 10.0
-        ), f"Concurrent operations took {total_time:.2f}s (expected <10.0s)"
-        assert (
-            memory_usage < 100
-        ), f"Memory usage {memory_usage:.1f}MB (expected <100MB)"
+        assert total_time < 10.0, (
+            f"Concurrent operations took {total_time:.2f}s (expected <10.0s)"
+        )
+        assert memory_usage < 100, (
+            f"Memory usage {memory_usage:.1f}MB (expected <100MB)"
+        )
 
         print("\n📊 Concurrent Operations (5 batches × 10 chemicals):")
         print(f"   ⏱️  Time: {total_time:.3f}s")

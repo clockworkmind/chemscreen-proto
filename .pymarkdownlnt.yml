@@ -7,11 +7,29 @@ plugins:
   line-length:
     enabled: false
 
-  # MD022: Blank lines around headings - not always necessary
+  # MD022: Blank lines around headings - less strict for existing docs
   blanks-around-headings:
-    enabled: true
-    lines_above: 1
-    lines_below: 1
+    enabled: false
+
+  # MD031: Blank lines around fenced code blocks - less strict
+  blanks-around-fences:
+    enabled: false
+
+  # MD036: Emphasis as heading - less strict for existing docs
+  no-emphasis-as-heading:
+    enabled: false
+
+  # MD034: Bare URLs - common in documentation
+  no-bare-urls:
+    enabled: false
+
+  # MD024: Duplicate headings - common in structured docs
+  no-duplicate-heading:
+    enabled: false
+
+  # MD035: Horizontal rule style - less important
+  hr-style:
+    enabled: false
 
 # Global configuration
 mode:

@@ -51,6 +51,10 @@ warn_no_return = true
 warn_unreachable = true
 strict_equality = true
 
+[tool.ruff]
+# Maintain compatibility with pre-commit
+line-length = 88  # Default line length
+
 [[tool.mypy.overrides]]
 module = "streamlit.*"
 ignore_missing_imports = true

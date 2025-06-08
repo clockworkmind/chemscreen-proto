@@ -57,6 +57,7 @@ print(f'Memory usage: {psutil.Process(os.getpid()).memory_info().rss / 1024 / 10
 ### 1. Configuration System Testing
 
 #### Environment Variable Loading
+
 ```bash
 # Test with no .env file
 mv .env .env.backup 2>/dev/null || true
@@ -74,6 +75,7 @@ pkill -f streamlit
 ```
 
 #### Configuration Validation
+
 ```bash
 # Test configuration validation
 uv run python -c "
@@ -89,6 +91,7 @@ print(f'✅ Configuration validated with {len(warnings)} warnings')
 ### 2. Core Functionality Testing
 
 #### Chemical Processing
+
 ```bash
 # Test chemical validation
 uv run python -c "
@@ -101,6 +104,7 @@ for cas in test_cases:
 ```
 
 #### Cache System
+
 ```bash
 # Test cache functionality
 uv run python -c "
@@ -120,6 +124,7 @@ print(f'Cleared {cleared} expired entries')
 ### 3. Application Testing
 
 #### Basic Startup
+
 ```bash
 # Start application
 uv run streamlit run app.py
@@ -133,6 +138,7 @@ uv run streamlit run app.py
 ```
 
 #### Demo Data Testing
+
 - [ ] Upload `data/raw/demo_small.csv` (10 chemicals)
 - [ ] Verify all 10 chemicals are displayed in preview
 - [ ] Start search with default parameters
@@ -142,6 +148,7 @@ uv run streamlit run app.py
 - [ ] Open exported file to verify formatting
 
 #### Large Batch Testing
+
 - [ ] Upload `data/raw/demo_medium.csv` (50 chemicals)
 - [ ] Monitor memory usage during processing
 - [ ] Verify processing completes within 15 minutes
@@ -149,11 +156,13 @@ uv run streamlit run app.py
 - [ ] Export large results successfully
 
 #### Error Handling Testing
+
 ```bash
 # Create invalid CSV for testing
 echo "invalid,headers" > /tmp/test_invalid.csv
 echo "bad,data" >> /tmp/test_invalid.csv
 ```
+
 - [ ] Upload invalid CSV file
 - [ ] Verify helpful error message
 - [ ] Test with empty CSV file
@@ -162,6 +171,7 @@ echo "bad,data" >> /tmp/test_invalid.csv
 ### 4. API Integration Testing
 
 #### PubMed Connectivity
+
 ```bash
 # Test basic PubMed connectivity
 uv run python -c "
@@ -184,6 +194,7 @@ asyncio.run(test_search())
 ```
 
 #### Rate Limiting
+
 ```bash
 # Test rate limiting behavior
 uv run python -c "
@@ -206,12 +217,14 @@ asyncio.run(test_rate_limit())
 ### 5. Session Management Testing
 
 #### Session Persistence
+
 - [ ] Start a search with demo data
 - [ ] Close browser/restart app during processing
 - [ ] Verify session can be resumed
 - [ ] Check session history shows previous searches
 
 #### Session Cleanup
+
 ```bash
 # Test session cleanup
 uv run python -c "
@@ -225,6 +238,7 @@ print(f'Cleaned up {deleted} old sessions')
 ### 6. Export Testing
 
 #### Format Testing
+
 - [ ] Export to CSV format
 - [ ] Export to Excel format (.xlsx)
 - [ ] Export to JSON format
@@ -233,6 +247,7 @@ print(f'Cleaned up {deleted} old sessions')
 - [ ] Test export without abstracts
 
 #### Large Export Testing
+
 - [ ] Export 100+ chemical results
 - [ ] Verify Excel file opens without corruption
 - [ ] Check file size is reasonable (<50MB)
@@ -283,21 +298,25 @@ measure_performance()
 ## Common Issues and Solutions
 
 ### Issue: High Memory Usage
+
 - Check for large result sets not being cleared
 - Verify cache is not growing unbounded
 - Monitor Streamlit session state size
 
 ### Issue: Slow Performance
+
 - Check PubMed rate limiting configuration
 - Verify cache hit rates
 - Monitor network connectivity
 
 ### Issue: Configuration Problems
+
 - Verify .env file format
 - Check file permissions on data directories
 - Validate environment variable types
 
 ### Issue: Export Failures
+
 - Check disk space in export directory
 - Verify openpyxl installation
 - Test with smaller result sets
@@ -305,6 +324,7 @@ measure_performance()
 ## Git Workflow Testing
 
 ### Before Committing
+
 ```bash
 # Full test suite
 uv run ruff check .

@@ -7,17 +7,20 @@ This guide walks you through installing and running ChemScreen on your local des
 ## System Requirements
 
 ### Operating System
+
 - **Windows**: Windows 10 or later
 - **macOS**: macOS 10.15 (Catalina) or later
 - **Linux**: Ubuntu 18.04+ or equivalent
 
 ### Hardware Requirements
+
 - **RAM**: Minimum 4GB, recommended 8GB+
 - **Storage**: 2GB free disk space
 - **CPU**: Any modern processor (2+ cores recommended)
 - **Network**: Internet connection required for PubMed searches
 
 ### Software Prerequisites
+
 - Web browser (Chrome, Firefox, Safari, or Edge)
 - No other software installation required (Python will be installed automatically)
 
@@ -30,6 +33,7 @@ Choose the method that best fits your technical comfort level:
 This method uses our automated installer script.
 
 #### Windows
+
 1. **Download the installer**:
    - Go to [Release Page URL] (replace with actual URL)
    - Download `chemscreen-windows-installer.exe`
@@ -45,6 +49,7 @@ This method uses our automated installer script.
    - Your browser will open automatically to the application
 
 #### macOS
+
 1. **Download the installer**:
    - Go to [Release Page URL]
    - Download `chemscreen-macos-installer.dmg`
@@ -60,7 +65,9 @@ This method uses our automated installer script.
    - Your browser will open automatically to the application
 
 #### Linux (Ubuntu/Debian)
+
 1. **Download and install**:
+
    ```bash
    wget https://[release-url]/chemscreen-linux-installer.deb
    sudo dpkg -i chemscreen-linux-installer.deb
@@ -68,9 +75,11 @@ This method uses our automated installer script.
    ```
 
 2. **Launch ChemScreen**:
+
    ```bash
    chemscreen
    ```
+
    Or find it in your applications menu.
 
 ### Method 2: Manual Installation (For Advanced Users)
@@ -78,6 +87,7 @@ This method uses our automated installer script.
 If you prefer to install manually or the automated installer doesn't work:
 
 #### Step 1: Install Python
+
 **Windows**:
 1. Go to https://www.python.org/downloads/
 2. Download Python 3.9 or later
