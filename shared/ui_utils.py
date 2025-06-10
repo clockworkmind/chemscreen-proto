@@ -112,12 +112,17 @@ def load_custom_css():
     )
 
 
-def setup_sidebar():
-    """Configure the sidebar with settings and status (without navigation)."""
+def setup_sidebar(show_title=True):
+    """Configure the sidebar with settings and status (without navigation).
+
+    Args:
+        show_title: Whether to show the ChemScreen title at the top
+    """
 
     with st.sidebar:
-        st.title("🧪 ChemScreen")
-        st.markdown("---")
+        if show_title:
+            st.title("🧪 ChemScreen")
+            st.markdown("---")
 
         # Quick Settings
         st.subheader("⚙️ Quick Settings")
