@@ -989,31 +989,11 @@ def show_upload_page():
         - Include headers in your CSV
         """)
 
-        # Demo data section
+        # Demo data section - removed duplicate buttons, use sidebar instead
         st.markdown("### 📊 Demo Data")
-        st.caption("Load sample datasets for testing")
-
-        col1, col2, col3 = st.columns(3)
-
-        with col1:
-            if st.button(
-                "Small\n(10)", help="Load 10 demo chemicals", use_container_width=True
-            ):
-                load_demo_data("small")
-
-        with col2:
-            if st.button(
-                "Medium\n(50)", help="Load 50 demo chemicals", use_container_width=True
-            ):
-                load_demo_data("medium")
-
-        with col3:
-            if st.button(
-                "Large\n(150)",
-                help="Load 150 demo chemicals with edge cases",
-                use_container_width=True,
-            ):
-                load_demo_data("large")
+        st.caption(
+            "Use the demo data buttons in the sidebar to load sample datasets for testing"
+        )
 
 
 def show_search_page():
