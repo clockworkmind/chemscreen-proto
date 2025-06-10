@@ -556,10 +556,7 @@ def show_upload_page():
                 ):
                     st.info("These are intentional edge cases in the demo data:")
                     for error in result["invalid_rows"]:
-                        show_error_with_help(
-                            "validation_error",
-                            f"Row {error['row_number']}: {error['errors']}",
-                        )
+                        st.error(f"Row {error['row_number']}: {error['errors']}")
 
             # Navigate to search page after loading - fix button functionality
             if st.button("▶️ Go to Search", type="primary"):
