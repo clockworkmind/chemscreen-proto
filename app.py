@@ -211,6 +211,10 @@ def setup_sidebar():
 
         # Navigation
         st.subheader("Navigation")
+
+        # Check for programmatic navigation
+        default_page = st.session_state.get("navigation_page", "🏠 Home")
+
         page = st.radio(
             "Select Page",
             options=[
@@ -221,8 +225,30 @@ def setup_sidebar():
                 "📥 Export",
                 "📜 History",
             ],
+            index=[
+                "🏠 Home",
+                "📤 Upload Chemicals",
+                "🔍 Search",
+                "📊 Results",
+                "📥 Export",
+                "📜 History",
+            ].index(default_page)
+            if default_page
+            in [
+                "🏠 Home",
+                "📤 Upload Chemicals",
+                "🔍 Search",
+                "📊 Results",
+                "📥 Export",
+                "📜 History",
+            ]
+            else 0,
             label_visibility="collapsed",
         )
+
+        # Clear navigation state after use
+        if "navigation_page" in st.session_state:
+            del st.session_state.navigation_page
 
         st.markdown("---")
 
@@ -411,42 +437,22 @@ def load_demo_data(size: str):
             if result.valid_chemicals:
                 st.session_state.chemicals = result.valid_chemicals
 
-                # Show success message with stats
-                st.success(
-                    f"✅ {size.title()} demo dataset loaded! "
-                    f"{len(result.valid_chemicals)} chemicals ready for search."
-                )
-
-                # Show any warnings from processing
-                if result.warnings:
-                    with st.expander(
-                        f"⚠️ Processing Warnings ({len(result.warnings)})",
-                        expanded=False,
-                    ):
-                        for warning in result.warnings:
-                            st.warning(warning)
-
-                # Show invalid rows if any (expected for large dataset with edge cases)
-                if result.invalid_rows:
-                    with st.expander(
-                        f"❌ Invalid Rows ({len(result.invalid_rows)})", expanded=False
-                    ):
-                        st.info("These are intentional edge cases in the demo data:")
-                        for error in result.invalid_rows:
-                            show_error_with_help(
-                                "validation_error",
-                                f"Row {error['row_number']}: {error['errors']}",
-                            )
-
-                # Automatically navigate to search page after loading
-                if st.button("▶️ Go to Search", type="primary"):
-                    st.rerun()
-
-            else:
-                show_error_with_help(
-                    "no_valid_data",
-                    "Demo data contains no valid chemicals after processing",
-                )
+        # Store demo loading result in session state for main area display
+        if result.valid_chemicals:
+            st.session_state.chemicals = result.valid_chemicals
+            st.session_state.demo_load_result = {
+                "size": size,
+                "valid_count": len(result.valid_chemicals),
+                "warnings": result.warnings,
+                "invalid_rows": result.invalid_rows,
+                "success": True,
+            }
+        else:
+            st.session_state.demo_load_result = {
+                "size": size,
+                "success": False,
+                "error": "Demo data contains no valid chemicals after processing",
+            }
 
     except FileNotFoundError:
         show_error_with_help(
@@ -524,6 +530,50 @@ def show_home_page():
 def show_upload_page():
     """Display the chemical upload page."""
     st.title("📤 Upload Chemical List")
+
+    # Check for demo load results and display them in main area
+    if "demo_load_result" in st.session_state:
+        result = st.session_state.demo_load_result
+        if result["success"]:
+            st.success(
+                f"✅ {result['size'].title()} demo dataset loaded! "
+                f"{result['valid_count']} chemicals ready for search."
+            )
+
+            # Show any warnings from processing
+            if result.get("warnings"):
+                with st.expander(
+                    f"⚠️ Processing Warnings ({len(result['warnings'])})",
+                    expanded=False,
+                ):
+                    for warning in result["warnings"]:
+                        st.warning(warning)
+
+            # Show invalid rows if any (expected for large dataset with edge cases)
+            if result.get("invalid_rows"):
+                with st.expander(
+                    f"❌ Invalid Rows ({len(result['invalid_rows'])})", expanded=False
+                ):
+                    st.info("These are intentional edge cases in the demo data:")
+                    for error in result["invalid_rows"]:
+                        st.error(f"Row {error['row_number']}: {error['errors']}")
+
+            # Navigate to search page after loading - fix button functionality
+            if st.button("▶️ Go to Search", type="primary"):
+                # Set the navigation state to search page
+                st.session_state.navigation_page = "🔍 Search"
+                # Clear demo result to avoid showing it again
+                del st.session_state.demo_load_result
+                st.rerun()
+        else:
+            show_error_with_help(
+                "no_valid_data",
+                result.get("error", "Demo data loading failed"),
+            )
+
+        # Clear demo result after showing (unless user clicked Go to Search)
+        if "demo_load_result" in st.session_state:
+            del st.session_state.demo_load_result
 
     st.markdown("""
     Upload a CSV file containing the chemicals you want to search. The file should have columns for
@@ -936,31 +986,11 @@ def show_upload_page():
         - Include headers in your CSV
         """)
 
-        # Demo data section
+        # Demo data section - removed duplicate buttons, use sidebar instead
         st.markdown("### 📊 Demo Data")
-        st.caption("Load sample datasets for testing")
-
-        col1, col2, col3 = st.columns(3)
-
-        with col1:
-            if st.button(
-                "Small\n(10)", help="Load 10 demo chemicals", use_container_width=True
-            ):
-                load_demo_data("small")
-
-        with col2:
-            if st.button(
-                "Medium\n(50)", help="Load 50 demo chemicals", use_container_width=True
-            ):
-                load_demo_data("medium")
-
-        with col3:
-            if st.button(
-                "Large\n(150)",
-                help="Load 150 demo chemicals with edge cases",
-                use_container_width=True,
-            ):
-                load_demo_data("large")
+        st.caption(
+            "Use the demo data buttons in the sidebar to load sample datasets for testing"
+        )
 
 
 def show_search_page():
