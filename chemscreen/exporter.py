@@ -5,7 +5,7 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import List, Any, Optional, Tuple
+from typing import Any, Optional
 
 try:
     import openpyxl
@@ -43,7 +43,7 @@ class ExportManager:
 
     def export_to_csv(
         self,
-        results: List[Tuple[SearchResult, QualityMetrics]],
+        results: list[tuple[SearchResult, QualityMetrics]],
         session: BatchSearchSession,
         filename: Optional[str] = None,
         include_abstracts: bool = False,
@@ -127,7 +127,7 @@ class ExportManager:
 
     def export_to_excel(
         self,
-        results: List[Tuple[SearchResult, QualityMetrics]],
+        results: list[tuple[SearchResult, QualityMetrics]],
         session: BatchSearchSession,
         filename: Optional[str] = None,
         include_abstracts: bool = False,
@@ -174,7 +174,7 @@ class ExportManager:
     def _create_summary_sheet(
         self,
         wb: Any,
-        results: List[Tuple[SearchResult, QualityMetrics]],
+        results: list[tuple[SearchResult, QualityMetrics]],
         session: BatchSearchSession,
     ) -> None:
         """Create summary sheet in Excel workbook."""
@@ -235,7 +235,7 @@ class ExportManager:
     def _create_detailed_sheet(
         self,
         wb: Any,
-        results: List[Tuple[SearchResult, QualityMetrics]],
+        results: list[tuple[SearchResult, QualityMetrics]],
         include_abstracts: bool,
     ) -> None:
         """Create detailed results sheet in Excel workbook."""
@@ -331,7 +331,7 @@ class ExportManager:
 
     def export_to_json(
         self,
-        results: List[Tuple[SearchResult, QualityMetrics]],
+        results: list[tuple[SearchResult, QualityMetrics]],
         session: BatchSearchSession,
         filename: Optional[str] = None,
     ) -> Path:

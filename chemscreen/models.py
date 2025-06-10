@@ -1,7 +1,7 @@
 """Data models for ChemScreen using Pydantic."""
 
 from datetime import datetime
-from typing import Optional, List, Dict, Any
+from typing import Optional, Any
 from pydantic import BaseModel, Field, ConfigDict, field_validator
 import re
 
@@ -11,7 +11,7 @@ class Chemical(BaseModel):
 
     name: str = Field(..., description="Chemical name", min_length=1)
     cas_number: Optional[str] = Field(None, description="CAS Registry Number")
-    synonyms: List[str] = Field(default_factory=list, description="Alternative names")
+    synonyms: list[str] = Field(default_factory=list, description="Alternative names")
     validated: bool = Field(
         False, description="Whether the chemical has been validated"
     )
@@ -66,7 +66,7 @@ class Publication(BaseModel):
 
     pmid: str = Field(..., description="PubMed ID")
     title: str = Field(..., description="Publication title")
-    authors: List[str] = Field(default_factory=list, description="Author list")
+    authors: list[str] = Field(default_factory=list, description="Author list")
     journal: Optional[str] = Field(None, description="Journal name")
     year: Optional[int] = Field(None, description="Publication year")
     abstract: Optional[str] = Field(None, description="Abstract text")
@@ -87,7 +87,7 @@ class SearchResult(BaseModel):
         default_factory=datetime.now, description="When the search was performed"
     )
     total_count: int = Field(0, description="Total number of publications found")
-    publications: List[Publication] = Field(
+    publications: list[Publication] = Field(
         default_factory=list, description="List of publications"
     )
     error: Optional[str] = Field(None, description="Error message if search failed")
@@ -123,11 +123,11 @@ class BatchSearchSession(BaseModel):
     created_at: datetime = Field(
         default_factory=datetime.now, description="Session creation time"
     )
-    chemicals: List[Chemical] = Field(
+    chemicals: list[Chemical] = Field(
         default_factory=list, description="Chemicals in this batch"
     )
     parameters: SearchParameters = Field(..., description="Search parameters used")
-    results: Dict[str, SearchResult] = Field(
+    results: dict[str, SearchResult] = Field(
         default_factory=dict, description="Results by chemical name"
     )
     status: str = Field(
@@ -142,7 +142,7 @@ class ExportData(BaseModel):
     """Data structure for export."""
 
     session: BatchSearchSession = Field(..., description="The search session")
-    quality_metrics: Dict[str, QualityMetrics] = Field(
+    quality_metrics: dict[str, QualityMetrics] = Field(
         default_factory=dict, description="Quality metrics by chemical"
     )
     export_format: str = Field("csv", description="Export format: csv/xlsx/json")
@@ -156,14 +156,14 @@ class CSVUploadResult(BaseModel):
     """Result of CSV file processing."""
 
     total_rows: int = Field(..., description="Total number of rows in CSV")
-    valid_chemicals: List[Chemical] = Field(
+    valid_chemicals: list[Chemical] = Field(
         default_factory=list, description="Successfully validated chemicals"
     )
-    invalid_rows: List[Dict[str, Any]] = Field(
+    invalid_rows: list[dict[str, Any]] = Field(
         default_factory=list, description="Rows with validation errors"
     )
-    warnings: List[str] = Field(default_factory=list, description="Non-fatal warnings")
-    column_mapping: Dict[str, str] = Field(
+    warnings: list[str] = Field(default_factory=list, description="Non-fatal warnings")
+    column_mapping: dict[str, str] = Field(
         default_factory=dict, description="Mapping of CSV columns to fields"
     )
 

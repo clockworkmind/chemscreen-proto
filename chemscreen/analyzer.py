@@ -1,7 +1,7 @@
 """Analyzer module for quality scoring and trend analysis."""
 
 from datetime import datetime
-from typing import List, Dict, Tuple, Any
+from typing import Any
 from collections import Counter
 import logging
 
@@ -69,7 +69,7 @@ def calculate_quality_metrics(result: SearchResult) -> QualityMetrics:
     )
 
 
-def calculate_publication_trend(publications: List[Publication]) -> str:
+def calculate_publication_trend(publications: list[Publication]) -> str:
     """
     Calculate publication trend over time.
 
@@ -165,10 +165,10 @@ def calculate_quality_score(
 
 
 def identify_high_priority_chemicals(
-    results: List[Tuple[SearchResult, QualityMetrics]],
+    results: list[tuple[SearchResult, QualityMetrics]],
     min_score: float = 70.0,
     min_publications: int = 20,
-) -> List[Tuple[SearchResult, QualityMetrics]]:
+) -> list[tuple[SearchResult, QualityMetrics]]:
     """
     Identify high priority chemicals based on quality metrics.
 
@@ -196,8 +196,8 @@ def identify_high_priority_chemicals(
 
 
 def generate_summary_statistics(
-    results: List[Tuple[SearchResult, QualityMetrics]],
-) -> Dict[str, Any]:
+    results: list[tuple[SearchResult, QualityMetrics]],
+) -> dict[str, Any]:
     """
     Generate summary statistics for a batch search.
 
@@ -245,8 +245,8 @@ def generate_summary_statistics(
 
 
 def group_chemicals_by_quality(
-    results: List[Tuple[SearchResult, QualityMetrics]],
-) -> Dict[str, List[Tuple[SearchResult, QualityMetrics]]]:
+    results: list[tuple[SearchResult, QualityMetrics]],
+) -> dict[str, list[tuple[SearchResult, QualityMetrics]]]:
     """
     Group chemicals into quality tiers.
 
@@ -256,7 +256,7 @@ def group_chemicals_by_quality(
     Returns:
         Dictionary with quality tiers
     """
-    tiers: Dict[str, List[Tuple[SearchResult, QualityMetrics]]] = {
+    tiers: dict[str, list[tuple[SearchResult, QualityMetrics]]] = {
         "high": [],  # 70+ score
         "medium": [],  # 40-69 score
         "low": [],  # 10-39 score
