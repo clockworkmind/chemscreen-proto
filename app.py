@@ -211,6 +211,10 @@ def setup_sidebar():
 
         # Navigation
         st.subheader("Navigation")
+
+        # Check for programmatic navigation
+        default_page = st.session_state.get("navigation_page", "🏠 Home")
+
         page = st.radio(
             "Select Page",
             options=[
@@ -221,8 +225,30 @@ def setup_sidebar():
                 "📥 Export",
                 "📜 History",
             ],
+            index=[
+                "🏠 Home",
+                "📤 Upload Chemicals",
+                "🔍 Search",
+                "📊 Results",
+                "📥 Export",
+                "📜 History",
+            ].index(default_page)
+            if default_page
+            in [
+                "🏠 Home",
+                "📤 Upload Chemicals",
+                "🔍 Search",
+                "📊 Results",
+                "📥 Export",
+                "📜 History",
+            ]
+            else 0,
             label_visibility="collapsed",
         )
+
+        # Clear navigation state after use
+        if "navigation_page" in st.session_state:
+            del st.session_state.navigation_page
 
         st.markdown("---")
 
@@ -411,42 +437,45 @@ def load_demo_data(size: str):
             if result.valid_chemicals:
                 st.session_state.chemicals = result.valid_chemicals
 
-                # Show success message with stats
-                st.success(
-                    f"✅ {size.title()} demo dataset loaded! "
-                    f"{len(result.valid_chemicals)} chemicals ready for search."
-                )
+        # Show success message with stats - moved outside spinner context for full width
+        if result.valid_chemicals:
+            st.success(
+                f"✅ {size.title()} demo dataset loaded! "
+                f"{len(result.valid_chemicals)} chemicals ready for search."
+            )
 
-                # Show any warnings from processing
-                if result.warnings:
-                    with st.expander(
-                        f"⚠️ Processing Warnings ({len(result.warnings)})",
-                        expanded=False,
-                    ):
-                        for warning in result.warnings:
-                            st.warning(warning)
+            # Show any warnings from processing
+            if result.warnings:
+                with st.expander(
+                    f"⚠️ Processing Warnings ({len(result.warnings)})",
+                    expanded=False,
+                ):
+                    for warning in result.warnings:
+                        st.warning(warning)
 
-                # Show invalid rows if any (expected for large dataset with edge cases)
-                if result.invalid_rows:
-                    with st.expander(
-                        f"❌ Invalid Rows ({len(result.invalid_rows)})", expanded=False
-                    ):
-                        st.info("These are intentional edge cases in the demo data:")
-                        for error in result.invalid_rows:
-                            show_error_with_help(
-                                "validation_error",
-                                f"Row {error['row_number']}: {error['errors']}",
-                            )
+            # Show invalid rows if any (expected for large dataset with edge cases)
+            if result.invalid_rows:
+                with st.expander(
+                    f"❌ Invalid Rows ({len(result.invalid_rows)})", expanded=False
+                ):
+                    st.info("These are intentional edge cases in the demo data:")
+                    for error in result.invalid_rows:
+                        show_error_with_help(
+                            "validation_error",
+                            f"Row {error['row_number']}: {error['errors']}",
+                        )
 
-                # Automatically navigate to search page after loading
-                if st.button("▶️ Go to Search", type="primary"):
-                    st.rerun()
+            # Navigate to search page after loading - fix button functionality
+            if st.button("▶️ Go to Search", type="primary"):
+                # Set the navigation state to search page
+                st.session_state.navigation_page = "🔍 Search"
+                st.rerun()
 
-            else:
-                show_error_with_help(
-                    "no_valid_data",
-                    "Demo data contains no valid chemicals after processing",
-                )
+        else:
+            show_error_with_help(
+                "no_valid_data",
+                "Demo data contains no valid chemicals after processing",
+            )
 
     except FileNotFoundError:
         show_error_with_help(
