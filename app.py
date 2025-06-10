@@ -241,7 +241,7 @@ def setup_sidebar():
             st.session_state.settings["max_results_per_chemical"] = st.number_input(
                 "Max Results per Chemical",
                 min_value=10,
-                max_value=500,
+                max_value=10000,
                 value=st.session_state.settings["max_results_per_chemical"],
                 step=10,
                 help="Maximum number of results to retrieve per chemical",
@@ -994,7 +994,7 @@ def show_search_page():
         _max_results = st.number_input(
             "Maximum Results per Chemical",
             min_value=10,
-            max_value=500,
+            max_value=10000,
             value=st.session_state.settings["max_results_per_chemical"],
             step=10,
         )
