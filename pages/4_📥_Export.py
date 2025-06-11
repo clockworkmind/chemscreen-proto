@@ -47,11 +47,6 @@ st.set_page_config(
 init_session_state()
 load_custom_css()
 
-# Add sidebar title above page navigation
-with st.sidebar:
-    st.title("🧪 ChemScreen")
-    st.markdown("---")
-
 setup_sidebar()
 
 
@@ -61,11 +56,7 @@ def show_export_page():
 
     if not st.session_state.search_results:
         st.warning("⚠️ No results to export. Please run a search first.")
-        if st.button("Go to Search"):
-            try:
-                st.switch_page("pages/2_🔍_Search.py")
-            except AttributeError:
-                st.info("💡 Navigate to the **Search** page to run a search.")
+        st.page_link("pages/2_🔍_Search.py", label="Go to Search", icon="▶️")
         return
 
     st.markdown("Export your search results in various formats for further analysis.")

@@ -41,11 +41,6 @@ st.set_page_config(
 init_session_state()
 load_custom_css()
 
-# Add sidebar title above page navigation
-with st.sidebar:
-    st.title("🧪 ChemScreen")
-    st.markdown("---")
-
 setup_sidebar()
 
 
@@ -65,11 +60,7 @@ def show_history_page():
         st.info(
             "No search history available. Run a search to create your first session."
         )
-        if st.button("Go to Search"):
-            try:
-                st.switch_page("pages/2_🔍_Search.py")
-            except AttributeError:
-                st.info("💡 Navigate to the **Search** page to run your first search.")
+        st.page_link("pages/2_🔍_Search.py", label="Go to Search", icon="▶️")
         return
 
     # Session management controls

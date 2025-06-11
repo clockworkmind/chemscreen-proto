@@ -58,11 +58,6 @@ st.set_page_config(
 init_session_state()
 load_custom_css()
 
-# Add sidebar title above page navigation
-with st.sidebar:
-    st.title("🧪 ChemScreen")
-    st.markdown("---")
-
 setup_sidebar()
 
 

@@ -53,11 +53,6 @@ st.set_page_config(
 init_session_state()
 load_custom_css()
 
-# Add sidebar title above page navigation
-with st.sidebar:
-    st.title("🧪 ChemScreen")
-    st.markdown("---")
-
 setup_sidebar()
 
 
@@ -93,15 +88,8 @@ def show_upload_page():
                         st.error(f"Row {error['row_number']}: {error['errors']}")
 
             # Navigate to search page after loading
-            if st.button("▶️ Go to Search", type="primary"):
-                try:
-                    st.switch_page("pages/2_🔍_Search.py")
-                except AttributeError:
-                    st.info(
-                        "💡 Navigate to the **Search** page to configure and run your search."
-                    )
-                # Clear demo result to avoid showing it again
-                del st.session_state.demo_load_result
+            st.page_link("pages/2_🔍_Search.py", label="Go to Search", icon="▶️")
+
         else:
             show_error_with_help(
                 "no_valid_data",
