@@ -4,7 +4,7 @@ import asyncio
 import aiohttp
 import logging
 from datetime import datetime, timedelta
-from typing import List, Optional, Any, Dict
+from typing import Optional, Any
 import xml.etree.ElementTree as ET
 
 from chemscreen.models import Chemical, Publication, SearchResult
@@ -131,12 +131,12 @@ class PubMedClient:
             )
 
             # Search for PMIDs
-            pmids = await self._esearch(query, max_results)
+            pmids, total_count = await self._esearch(query, max_results)
 
             if not pmids:
                 return SearchResult(
                     chemical=chemical,
-                    total_count=0,
+                    total_count=total_count,
                     publications=[],
                     search_time_seconds=asyncio.get_event_loop().time() - start_time,
                     error=None,
@@ -146,8 +146,7 @@ class PubMedClient:
             # Fetch publication details
             publications = await self._efetch(pmids)
 
-            # Determine total count (may be more than retrieved)
-            total_count = len(pmids)  # TODO: Get actual count from esearch
+            # Use actual total count from PubMed (may be more than retrieved)
 
             return SearchResult(
                 chemical=chemical,
@@ -169,11 +168,11 @@ class PubMedClient:
                 from_cache=False,
             )
 
-    async def _esearch(self, query: str, max_results: int) -> List[str]:
+    async def _esearch(self, query: str, max_results: int) -> tuple[list[str], int]:
         """Execute E-search to get PMIDs."""
         await self.rate_limiter.wait()
 
-        params: Dict[str, Any] = {
+        params: dict[str, Any] = {
             "db": "pubmed",
             "term": query,
             "retmax": max_results,
@@ -197,11 +196,13 @@ class PubMedClient:
             response.raise_for_status()
             data = await response.json()
 
-            # Extract PMIDs
-            id_list = data.get("esearchresult", {}).get("idlist", [])
-            return id_list  # type: ignore[no-any-return]
+            # Extract PMIDs and total count
+            esearch_result = data.get("esearchresult", {})
+            id_list = esearch_result.get("idlist", [])
+            total_count = int(esearch_result.get("count", 0))
+            return id_list, total_count
 
-    async def _efetch(self, pmids: List[str]) -> List[Publication]:
+    async def _efetch(self, pmids: list[str]) -> list[Publication]:
         """Fetch publication details for PMIDs."""
         if not pmids:
             return []
@@ -234,7 +235,7 @@ class PubMedClient:
             # Parse XML to extract publications
             return self._parse_pubmed_xml(xml_data)
 
-    def _parse_pubmed_xml(self, xml_data: str) -> List[Publication]:
+    def _parse_pubmed_xml(self, xml_data: str) -> list[Publication]:
         """Parse PubMed XML response to extract publication data."""
         publications = []
 
@@ -324,14 +325,14 @@ class PubMedClient:
 
 
 async def batch_search(
-    chemicals: List[Chemical],
+    chemicals: list[Chemical],
     max_results_per_chemical: Optional[int] = None,
     date_range_years: Optional[int] = None,
     include_reviews: Optional[bool] = None,
     api_key: Optional[str] = None,
     progress_callback: Optional[Any] = None,
     config: Optional[Config] = None,
-) -> List[SearchResult]:
+) -> list[SearchResult]:
     """
     Perform batch search for multiple chemicals.
 
@@ -347,20 +348,36 @@ async def batch_search(
     Returns:
         List of SearchResult objects
     """
+    import asyncio
+
     config = config or get_config()
-    results = []
 
     async with PubMedClient(api_key, config) as client:
-        for i, chemical in enumerate(chemicals):
-            # Search for chemical
-            result = await client.search(
-                chemical, max_results_per_chemical, date_range_years, include_reviews
-            )
+        # Create semaphore to limit concurrent requests
+        semaphore = asyncio.Semaphore(config.concurrent_requests)
+
+        async def search_with_semaphore(chemical):
+            """Search with semaphore control and progress tracking."""
+            async with semaphore:
+                return await client.search(
+                    chemical,
+                    max_results_per_chemical,
+                    date_range_years,
+                    include_reviews,
+                )
+
+        # Create all search tasks
+        tasks = [search_with_semaphore(chemical) for chemical in chemicals]
+
+        # Run tasks concurrently with progress updates
+        results = []
+        for i, task in enumerate(asyncio.as_completed(tasks)):
+            result = await task
             results.append(result)
 
             # Progress callback
             if progress_callback:
                 progress = (i + 1) / len(chemicals)
-                await progress_callback(progress, chemical)
+                await progress_callback(progress, result.chemical)
 
     return results

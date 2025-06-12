@@ -5,7 +5,7 @@ import hashlib
 import logging
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Optional, Any
 
 from chemscreen.models import SearchResult, Chemical, Publication
 from chemscreen.config import get_config, Config
@@ -205,7 +205,7 @@ class CacheManager:
         logger.info(f"Cleared {count} expired cache files")
         return count
 
-    def get_cache_stats(self) -> Dict[str, Any]:
+    def get_cache_stats(self) -> dict[str, Any]:
         """Get cache statistics."""
         total_files = 0
         total_size = 0
@@ -226,7 +226,7 @@ class CacheManager:
             "cache_directory": str(self.cache_dir),
         }
 
-    def _serialize_search_result(self, result: SearchResult) -> Dict[str, Any]:
+    def _serialize_search_result(self, result: SearchResult) -> dict[str, Any]:
         """Serialize SearchResult to JSON-compatible dict."""
         return {
             "search_date": result.search_date.isoformat(),
@@ -248,7 +248,7 @@ class CacheManager:
         }
 
     def _deserialize_search_result(
-        self, data: Dict[str, Any], chemical: Chemical
+        self, data: dict[str, Any], chemical: Chemical
     ) -> SearchResult:
         """Deserialize JSON data to SearchResult."""
         publications = [Publication(**pub_data) for pub_data in data["publications"]]
