@@ -218,7 +218,7 @@ If you installed manually:
 cd /path/to/chemscreen-proto
 
 # Start the application
-uv run streamlit run app.py
+uv run streamlit run ChemScreen.py
 
 # The application will open in your default browser
 # If it doesn't open automatically, go to: http://localhost:8501

@@ -61,7 +61,7 @@ print(f'Memory usage: {psutil.Process(os.getpid()).memory_info().rss / 1024 / 10
 ```bash
 # Test with no .env file
 mv .env .env.backup 2>/dev/null || true
-uv run streamlit run app.py --server.headless true &
+uv run streamlit run ChemScreen.py --server.headless true &
 sleep 5
 pkill -f streamlit
 mv .env.backup .env 2>/dev/null || true
@@ -69,7 +69,7 @@ mv .env.backup .env 2>/dev/null || true
 # Test with .env file
 cp .env.example .env
 # Edit PUBMED_API_KEY if you have one
-uv run streamlit run app.py --server.headless true &
+uv run streamlit run ChemScreen.py --server.headless true &
 sleep 5
 pkill -f streamlit
 ```
@@ -389,16 +389,24 @@ echo "ENABLE_PERFORMANCE_LOGGING=true" >> .env
 tail -f ~/.streamlit/logs/streamlit.log
 
 # Or run with verbose output
-uv run streamlit run app.py --logger.level debug
+uv run streamlit run ChemScreen.py --logger.level debug
 ```
 
 ### Profile Performance
 ```bash
-# Profile memory usage
-uv run python -m memory_profiler app.py
+# Profile memory usage during tests
+uv run python -m memory_profiler -m pytest tests/test_performance_baseline.py
 
-# Profile execution time
-uv run python -m cProfile -o profile.out app.py
+# Use built-in performance monitoring in the app
+# (ChemScreen includes performance logging when DEBUG=true in .env)
+DEBUG=true uv run streamlit run ChemScreen.py
+
+# Profile specific functions (example)
+uv run python -c "
+import cProfile
+from chemscreen.pubmed import batch_search
+# Profile specific functions as needed
+"
 ```
 
 ## Sign-off Checklist

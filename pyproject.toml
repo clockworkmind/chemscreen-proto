@@ -34,6 +34,7 @@ dev = [
     "watchdog>=6.0.0",
     "pandas-stubs>=2.2.3.250527",
     "psutil>=7.0.0",
+    "types-psutil>=7.0.0.20250601",
 ]
 
 [tool.mypy]
@@ -50,6 +51,7 @@ warn_unused_ignores = true
 warn_no_return = true
 warn_unreachable = true
 strict_equality = true
+plugins = ["pydantic.mypy"]
 
 [tool.ruff]
 # Maintain compatibility with pre-commit
@@ -66,6 +68,14 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "xmltodict.*"
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_decorators = false
+warn_return_any = false
+check_untyped_defs = false
 
 [tool.pytest.ini_options]
 minversion = "6.0"

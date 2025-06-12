@@ -356,7 +356,7 @@ async def batch_search(
         # Create semaphore to limit concurrent requests
         semaphore = asyncio.Semaphore(config.concurrent_requests)
 
-        async def search_with_semaphore(chemical):
+        async def search_with_semaphore(chemical: Chemical) -> SearchResult:
             """Search with semaphore control and progress tracking."""
             async with semaphore:
                 return await client.search(
