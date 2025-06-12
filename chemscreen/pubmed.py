@@ -203,13 +203,15 @@ class PubMedClient:
             return id_list, total_count
 
     async def _efetch(self, pmids: list[str]) -> list[Publication]:
-        """Fetch publication details for PMIDs."""
+        """Fetch publication details for PMIDs using POST to avoid URL length limits."""
         if not pmids:
             return []
 
         await self.rate_limiter.wait()
 
-        params = {
+        # Use POST with form data to avoid "Request-URI Too Long" errors
+        # This allows fetching thousands of PMIDs in a single request
+        data = {
             "db": "pubmed",
             "id": ",".join(pmids),
             "retmode": "xml",
@@ -217,18 +219,19 @@ class PubMedClient:
         }
 
         if self.api_key:
-            params["api_key"] = self.api_key
+            data["api_key"] = self.api_key
 
         # Add tool name and email if configured
         if self.config.pubmed_tool_name:
-            params["tool"] = self.config.pubmed_tool_name
+            data["tool"] = self.config.pubmed_tool_name
         if self.config.pubmed_email:
-            params["email"] = self.config.pubmed_email
+            data["email"] = self.config.pubmed_email
 
         if self.session is None:
             raise RuntimeError("Session not initialized")
 
-        async with self.session.get(EFETCH_URL, params=params) as response:
+        # Use POST instead of GET to avoid URL length limits
+        async with self.session.post(EFETCH_URL, data=data) as response:
             response.raise_for_status()
             xml_data = await response.text()
 

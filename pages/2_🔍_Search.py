@@ -170,10 +170,10 @@ def show_search_page() -> None:
         if st.button("🚀 Start Search", type="primary", use_container_width=True):
             st.session_state.current_batch_id = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-            # Get search parameters
-            date_range_years = st.session_state.get("date_range", 10)
-            max_results = st.session_state.get("max_results", 100)
-            include_reviews = st.session_state.get("include_reviews", True)
+            # Get search parameters from UI inputs
+            date_range_years = _date_range
+            max_results = _max_results
+            include_reviews = _include_reviews
             api_key = config.pubmed_api_key
 
             # Enhanced loading states
@@ -224,6 +224,7 @@ def show_search_page() -> None:
                         date_range_years=date_range_years,
                         max_results=max_results,
                         include_reviews=include_reviews,
+                        use_cache=_use_cache,
                     )
 
                     # Create BatchSearchSession object
