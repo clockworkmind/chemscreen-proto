@@ -36,9 +36,6 @@ jobs:
         # Use only 'javascript' to analyze code written in JavaScript, TypeScript or both
         # Learn more about CodeQL language support at https://aka.ms/codeql-language-support
         language: [ 'python' ]  # ChemScreen is a Python project
-        include:
-          - language: python
-            build-mode: none
 
     steps:
     - name: Checkout repository
@@ -51,8 +48,6 @@ jobs:
         languages: ${{ matrix.language }}
         # Enable security-extended queries for more comprehensive analysis
         queries: security-extended,security-and-quality
-        # Disable autobuild since we're using uv
-        build-mode: ${{ matrix.build-mode }}
 
     # Set up Python environment for better dependency analysis
     - name: Set up Python
