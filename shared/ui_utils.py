@@ -220,3 +220,195 @@ def setup_sidebar() -> None:
         # Footer
         st.caption("ChemScreen Prototype v1.0")
         st.caption("© 2025 - For Research Use Only")
+
+
+def create_progress_with_cancel(
+    label: str = "Processing...",
+) -> tuple[any, any, any, any]:
+    """
+    Create a progress bar with cancel functionality.
+
+    Args:
+        label: Label for the progress operation
+
+    Returns:
+        Tuple of (progress_bar, status_text, cancel_button, progress_container)
+    """
+    progress_container = st.container()
+
+    with progress_container:
+        st.markdown(f"**{label}**")
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+
+        with st.container():
+            cancel_button = st.button("⏸️ Cancel", key=f"cancel_{label}")
+
+    return progress_bar, status_text, cancel_button, progress_container
+
+
+def show_success_with_stats(
+    message: str, stats: dict[str, any], show_balloons: bool = True
+) -> None:
+    """
+    Show success message with statistics.
+
+    Args:
+        message: Success message
+        stats: Dictionary of statistics to display
+        show_balloons: Whether to show celebration balloons
+    """
+    st.success(f"✅ {message}")
+
+    if stats:
+        cols = st.columns(len(stats))
+        for i, (key, value) in enumerate(stats.items()):
+            with cols[i]:
+                st.metric(key, value)
+
+    if show_balloons:
+        st.balloons()
+
+
+def show_help_tooltip(title: str, content: str, icon: str = "💡") -> None:
+    """
+    Show a help tooltip with consistent styling.
+
+    Args:
+        title: Tooltip title
+        content: Tooltip content
+        icon: Icon to display
+    """
+    with st.expander(f"{icon} {title}", expanded=False):
+        st.markdown(content)
+
+
+def get_feature_help(feature: str) -> dict[str, str]:
+    """
+    Get help content for specific features.
+
+    Args:
+        feature: Name of the feature
+
+    Returns:
+        Dict with 'title', 'content', and 'icon' keys
+    """
+    help_content = {
+        "csv_upload": {
+            "title": "CSV Upload Tips",
+            "content": """
+**Required Format:**
+- CSV file with headers
+- At least one column with chemical names or CAS numbers
+- UTF-8 encoding recommended
+
+**Column Types:**
+- **Chemical Name**: Common or IUPAC names (e.g., "Methylene chloride")
+- **CAS Number**: Registry numbers in XXX-XX-X format (e.g., "75-09-2")
+- **Synonyms**: Alternative names (optional)
+- **Notes**: Additional information (optional)
+
+**Tips:**
+- Remove duplicate rows before uploading
+- Use standard chemical names when possible
+- Keep file size under 10MB
+- Maximum 200 chemicals per batch
+            """,
+            "icon": "📤",
+        },
+        "column_mapping": {
+            "title": "Column Mapping Guide",
+            "content": """
+**Auto-Detection:**
+The system tries to automatically detect your columns based on common names like:
+- "chemical_name", "name", "compound"
+- "cas_number", "cas", "registry_number"
+
+**Manual Selection:**
+If auto-detection fails, select the correct columns manually:
+- **Chemical Name**: Column containing compound names
+- **CAS Number**: Column with CAS Registry Numbers
+
+**Requirements:**
+- At least ONE column must be selected (name OR CAS)
+- Both columns can be selected for better results
+            """,
+            "icon": "🔗",
+        },
+        "search_settings": {
+            "title": "Search Settings Explained",
+            "content": """
+**Date Range:**
+- Limits search to publications from recent years
+- Shorter ranges = faster searches, fewer results
+- Longer ranges = more comprehensive, slower searches
+
+**Max Results per Chemical:**
+- Controls how many papers to find for each chemical
+- Higher numbers = more comprehensive but slower
+- Recommended: 50-100 for most use cases
+
+**Include Reviews:**
+- Review articles provide good overviews
+- Turn off to focus only on original research
+
+**Cache:**
+- Saves previous search results
+- Dramatically speeds up repeated searches
+- Safe to keep enabled
+            """,
+            "icon": "⚙️",
+        },
+        "batch_processing": {
+            "title": "Batch Processing Info",
+            "content": """
+**Performance:**
+- Each chemical takes ~30 seconds to search
+- 100 chemicals ≈ 50 minutes total time
+- Progress is shown in real-time
+
+**Limitations:**
+- Maximum 200 chemicals per batch
+- Larger batches need to be split
+- Memory usage increases with batch size
+
+**Recommendations:**
+- Start with smaller batches (10-50 chemicals)
+- Monitor progress during searches
+- Use cache to avoid re-searching
+            """,
+            "icon": "⚡",
+        },
+        "quality_scoring": {
+            "title": "Quality Scoring System",
+            "content": """
+**Scoring Factors:**
+- Journal impact factor
+- Publication date (newer = higher score)
+- Study type (original research vs. review)
+- Citation count
+- Relevance to chemical name
+
+**Score Ranges:**
+- **90-100**: High-quality, recent, relevant studies
+- **70-89**: Good quality with minor limitations
+- **50-69**: Moderate quality, may be older or less relevant
+- **Below 50**: Lower quality, proceed with caution
+
+**Usage:**
+- Use scores to prioritize which papers to review first
+- Don't exclude lower-scored papers entirely
+- Consider context of your specific needs
+            """,
+            "icon": "📊",
+        },
+    }
+
+    return help_content.get(
+        feature,
+        {
+            "title": "Help",
+            "content": "Help content not available for this feature.",
+            "icon": "❓",
+        },
+    )

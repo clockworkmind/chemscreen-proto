@@ -19,13 +19,16 @@ from chemscreen.analyzer import calculate_quality_metrics
 from chemscreen.exporter import ExportManager
 from chemscreen.errors import (
     show_error_with_help,
-    create_progress_with_cancel,
-    show_success_with_stats,
     log_error_for_support,
 )
 
 # Import shared utilities
-from shared.ui_utils import load_custom_css, setup_sidebar
+from shared.ui_utils import (
+    load_custom_css,
+    setup_sidebar,
+    create_progress_with_cancel,
+    show_success_with_stats,
+)
 from shared.app_utils import init_session_state
 
 # Initialize configuration and logging
