@@ -111,6 +111,16 @@ class SearchResult(BaseModel):
     )
     from_cache: bool = Field(False, description="Whether results came from cache")
 
+    @property
+    def is_failed(self) -> bool:
+        """Check if this search result represents a failed search."""
+        return self.error is not None
+
+    @property
+    def is_successful(self) -> bool:
+        """Check if this search result represents a successful search."""
+        return self.error is None
+
     model_config = ConfigDict(validate_assignment=True)
 
 

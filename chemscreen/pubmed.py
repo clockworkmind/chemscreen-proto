@@ -157,13 +157,43 @@ class PubMedClient:
                 from_cache=False,
             )
 
-        except Exception as e:
-            logger.error(f"Search failed for {chemical.name}: {str(e)}")
+        except aiohttp.ClientConnectionError as e:
+            logger.error(f"Connection error for {chemical.name}: {str(e)}")
             return SearchResult(
                 chemical=chemical,
                 total_count=0,
                 publications=[],
-                error=str(e),
+                error=f"Connection failed: {str(e)}",
+                search_time_seconds=asyncio.get_event_loop().time() - start_time,
+                from_cache=False,
+            )
+        except aiohttp.ClientTimeout as e:
+            logger.error(f"Timeout error for {chemical.name}: {str(e)}")
+            return SearchResult(
+                chemical=chemical,
+                total_count=0,
+                publications=[],
+                error=f"Request timeout: {str(e)}",
+                search_time_seconds=asyncio.get_event_loop().time() - start_time,
+                from_cache=False,
+            )
+        except aiohttp.ClientResponseError as e:
+            logger.error(f"HTTP error for {chemical.name}: {e.status} - {str(e)}")
+            return SearchResult(
+                chemical=chemical,
+                total_count=0,
+                publications=[],
+                error=f"HTTP error {e.status}: {str(e)}",
+                search_time_seconds=asyncio.get_event_loop().time() - start_time,
+                from_cache=False,
+            )
+        except Exception as e:
+            logger.error(f"Unexpected error for {chemical.name}: {str(e)}")
+            return SearchResult(
+                chemical=chemical,
+                total_count=0,
+                publications=[],
+                error=f"Search failed: {str(e)}",
                 search_time_seconds=asyncio.get_event_loop().time() - start_time,
                 from_cache=False,
             )

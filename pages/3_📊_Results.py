@@ -7,6 +7,7 @@ from pathlib import Path
 import sys
 import pandas as pd
 import logging
+from datetime import datetime
 
 # Add the project root to the path
 sys.path.append(str(Path(__file__).parent.parent))
@@ -83,8 +84,16 @@ def show_results_page() -> None:
         # Calculate quality metrics for each result
         metrics = calculate_quality_metrics(result)
 
-        # Determine status
-        status = "❌ Failed" if result.error else "✅ Complete"
+        # Determine status and error details
+        if result.error:
+            status = "❌ Failed"
+            error_msg = result.error
+            # Truncate long error messages for display
+            if len(error_msg) > 50:
+                error_msg = error_msg[:47] + "..."
+        else:
+            status = "✅ Complete"
+            error_msg = None
 
         results_data.append(
             {
@@ -96,6 +105,7 @@ def show_results_page() -> None:
                 "Quality Score": int(metrics.quality_score),
                 "Trend": metrics.publication_trend.title(),
                 "Status": status,
+                "Error Details": error_msg,
             }
         )
 
@@ -225,6 +235,62 @@ def show_results_page() -> None:
                 )
         else:
             st.info("No priority analysis available")
+
+    # Failed searches section
+    if failed_searches > 0:
+        st.markdown("---")
+        st.subheader("⚠️ Failed Searches")
+
+        # Show failed searches with details
+        failed_results = [r for r in search_results if r.error]
+
+        st.warning(
+            f"**{failed_searches} search(es) failed.** These chemicals may need to be retried."
+        )
+
+        # Create a table of failed searches with error details
+        failed_data = []
+        for result in failed_results:
+            failed_data.append(
+                {
+                    "Chemical Name": result.chemical.name,
+                    "CAS Number": result.chemical.cas_number or "N/A",
+                    "Error": result.error,
+                    "Search Time": f"{result.search_time_seconds:.1f}s"
+                    if result.search_time_seconds
+                    else "N/A",
+                }
+            )
+
+        failed_df = pd.DataFrame(failed_data)
+        st.dataframe(failed_df, use_container_width=True, hide_index=True)
+
+        # Export failed searches as CSV for retry
+        import io
+
+        csv_buffer = io.StringIO()
+        retry_df = pd.DataFrame(
+            [
+                {
+                    "chemical_name": result.chemical.name,
+                    "cas_number": result.chemical.cas_number or "",
+                    "synonyms": ", ".join(result.chemical.synonyms)
+                    if result.chemical.synonyms
+                    else "",
+                    "notes": f"Retry - Previous error: {result.error[:100]}",
+                }
+                for result in failed_results
+            ]
+        )
+        retry_df.to_csv(csv_buffer, index=False)
+
+        st.download_button(
+            label="📥 Download Failed Searches for Retry",
+            data=csv_buffer.getvalue(),
+            file_name=f"failed_searches_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+            mime="text/csv",
+            help="Download failed searches as CSV to retry later",
+        )
 
     # Quick action buttons
     st.markdown("---")
