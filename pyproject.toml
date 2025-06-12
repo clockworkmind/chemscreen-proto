@@ -37,6 +37,14 @@ dev = [
     "types-psutil>=7.0.0.20250601",
 ]
 
+[tool.ruff]
+# Maintain compatibility with pre-commit
+line-length = 90
+show-fixes = true
+
+[tool.ruff.lint]
+extend-select = ["I"]
+
 [tool.mypy]
 python_version = "3.12"
 warn_return_any = true
@@ -52,10 +60,6 @@ warn_no_return = true
 warn_unreachable = true
 strict_equality = true
 plugins = ["pydantic.mypy"]
-
-[tool.ruff]
-# Maintain compatibility with pre-commit
-line-length = 88  # Default line length
 
 [[tool.mypy.overrides]]
 module = "streamlit.*"

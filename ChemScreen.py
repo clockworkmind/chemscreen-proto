@@ -7,20 +7,21 @@ on chemicals for regulatory assessments.
 This is the main/home page of the application.
 """
 
-import streamlit as st
-from pathlib import Path
-import sys
 import logging
+import sys
+from pathlib import Path
+
+import streamlit as st
 
 # Add the chemscreen package to the path
 sys.path.append(str(Path(__file__).parent))
 
 # Import and initialize configuration
 from chemscreen.config import initialize_config
+from shared.app_utils import init_session_state
 
 # Import shared utilities
 from shared.ui_utils import load_custom_css, setup_sidebar
-from shared.app_utils import init_session_state
 
 # Initialize configuration system
 config = initialize_config()
@@ -105,9 +106,7 @@ def show_home_page() -> None:
         col1a, col1b, col1c = st.columns(3)
 
         with col1a:
-            if st.button(
-                "📤 Upload Chemicals", type="primary", use_container_width=True
-            ):
+            if st.button("📤 Upload Chemicals", type="primary", use_container_width=True):
                 st.switch_page("pages/1_📤_Upload_Chemicals.py")
 
         with col1b:
@@ -128,9 +127,7 @@ def show_home_page() -> None:
             len(st.session_state.chemicals) if st.session_state.chemicals else 0
         )
         results_count = (
-            len(st.session_state.search_results)
-            if st.session_state.search_results
-            else 0
+            len(st.session_state.search_results) if st.session_state.search_results else 0
         )
 
         # Estimate time saved (rough calculation: 2-3 minutes per chemical manually vs seconds with tool)
