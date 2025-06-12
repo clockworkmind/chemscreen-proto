@@ -153,14 +153,8 @@ def load_demo_data(size: str) -> None:
                 f"{len(result.valid_chemicals)} chemicals ready for search."
             )
 
-            # Try to navigate to upload page to show results
-            try:
-                st.switch_page("pages/1_📤_Upload_Chemicals.py")
-            except AttributeError:
-                # st.switch_page not available, provide guidance
-                st.info(
-                    "💡 Navigate to the **Upload Chemicals** page to see the loaded data."
-                )
+            # Navigate to upload page to show results
+            st.switch_page("pages/1_📤_Upload_Chemicals.py")
         else:
             st.session_state.demo_load_result = {
                 "size": size,

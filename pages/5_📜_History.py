@@ -163,12 +163,7 @@ def show_history_page() -> None:
 
                     # Quick navigation to results
                     if st.button("📊 View Results", type="secondary"):
-                        try:
-                            st.switch_page("pages/3_📊_Results.py")
-                        except AttributeError:
-                            st.info(
-                                "💡 Navigate to the **Results** page to view the loaded data."
-                            )
+                        st.switch_page("pages/3_📊_Results.py")
                 else:
                     show_error_with_help(
                         "session_load_failed",

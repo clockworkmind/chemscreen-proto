@@ -234,24 +234,15 @@ def show_results_page() -> None:
 
     with col1:
         if st.button("📥 Export Results", type="primary", use_container_width=True):
-            try:
-                st.switch_page("pages/4_📥_Export.py")
-            except AttributeError:
-                st.info("💡 Navigate to the **Export** page to export your results.")
+            st.switch_page("pages/4_📥_Export.py")
 
     with col2:
         if st.button("🔍 New Search", use_container_width=True):
-            try:
-                st.switch_page("pages/2_🔍_Search.py")
-            except AttributeError:
-                st.info("💡 Navigate to the **Search** page to run a new search.")
+            st.switch_page("pages/2_🔍_Search.py")
 
     with col3:
         if st.button("📜 View History", use_container_width=True):
-            try:
-                st.switch_page("pages/5_📜_History.py")
-            except AttributeError:
-                st.info("💡 Navigate to the **History** page to view past searches.")
+            st.switch_page("pages/5_📜_History.py")
 
 
 # Main execution

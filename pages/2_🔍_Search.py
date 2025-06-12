@@ -65,12 +65,7 @@ def show_search_page() -> None:
     if not st.session_state.chemicals:
         st.warning("⚠️ No chemicals loaded. Please upload a chemical list first.")
         if st.button("Go to Upload Page"):
-            try:
-                st.switch_page("pages/1_📤_Upload_Chemicals.py")
-            except AttributeError:
-                st.info(
-                    "💡 Navigate to the **Upload Chemicals** page to load your chemical list."
-                )
+            st.switch_page("pages/1_📤_Upload_Chemicals.py")
         return
 
     # Search configuration
@@ -268,12 +263,7 @@ def show_search_page() -> None:
 
                 # Navigate to results page
                 if st.button("📊 View Results", type="primary"):
-                    try:
-                        st.switch_page("pages/3_📊_Results.py")
-                    except AttributeError:
-                        st.info(
-                            "💡 Navigate to the **Results** page to view your search results."
-                        )
+                    st.switch_page("pages/3_📊_Results.py")
 
             except Exception as e:
                 progress_container.empty()

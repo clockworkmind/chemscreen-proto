@@ -247,21 +247,11 @@ def show_export_page() -> None:
 
             with col1:
                 if st.button("📊 View Results Again", use_container_width=True):
-                    try:
-                        st.switch_page("pages/3_📊_Results.py")
-                    except AttributeError:
-                        st.info(
-                            "💡 Navigate to the **Results** page to view your analysis."
-                        )
+                    st.switch_page("pages/3_📊_Results.py")
 
             with col2:
                 if st.button("🔍 New Search", use_container_width=True):
-                    try:
-                        st.switch_page("pages/2_🔍_Search.py")
-                    except AttributeError:
-                        st.info(
-                            "💡 Navigate to the **Search** page to run a new search."
-                        )
+                    st.switch_page("pages/2_🔍_Search.py")
 
         except Exception as e:
             progress_container.empty()

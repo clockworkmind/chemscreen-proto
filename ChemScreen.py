@@ -108,12 +108,7 @@ def show_home_page() -> None:
             if st.button(
                 "📤 Upload Chemicals", type="primary", use_container_width=True
             ):
-                try:
-                    st.switch_page("pages/1_📤_Upload_Chemicals.py")
-                except AttributeError:
-                    st.info(
-                        "💡 Navigate to the **Upload Chemicals** page using the sidebar."
-                    )
+                st.switch_page("pages/1_📤_Upload_Chemicals.py")
 
         with col1b:
             if st.button("📊 Load Demo Data", use_container_width=True):
@@ -123,10 +118,7 @@ def show_home_page() -> None:
 
         with col1c:
             if st.button("📜 View History", use_container_width=True):
-                try:
-                    st.switch_page("pages/5_📜_History.py")
-                except AttributeError:
-                    st.info("💡 Navigate to the **History** page using the sidebar.")
+                st.switch_page("pages/5_📜_History.py")
 
     with col2:
         st.markdown("### 📈 Session Stats")
