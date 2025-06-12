@@ -141,9 +141,10 @@ def show_export_page() -> None:
 
             # Create search parameters from session state
             search_params = SearchParameters(
-                date_range_years=st.session_state.get("date_range", 10),
-                max_results=st.session_state.get("max_results", 100),
-                include_reviews=st.session_state.get("include_reviews", True),
+                date_range_years=st.session_state.settings["date_range_years"],
+                max_results=st.session_state.settings["max_results_per_chemical"],
+                include_reviews=st.session_state.settings["include_reviews"],
+                use_cache=st.session_state.settings["cache_enabled"],
             )
 
             # Create session object

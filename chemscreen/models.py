@@ -6,6 +6,18 @@ from pydantic import BaseModel, Field, ConfigDict, field_validator
 import re
 
 
+def get_default_max_results() -> int:
+    """Get default max results from config, with fallback to 100."""
+    try:
+        from .config import get_config
+
+        config = get_config()
+        return config.max_results_per_chemical
+    except Exception:
+        # Fallback for cases where config isn't available (e.g., during imports)
+        return 100
+
+
 class Chemical(BaseModel):
     """Chemical entity with name and CAS number."""
 
@@ -53,7 +65,10 @@ class SearchParameters(BaseModel):
 
     date_range_years: int = Field(10, ge=1, le=50, description="Years to search back")
     max_results: int = Field(
-        100, ge=10, le=1000, description="Maximum results per chemical"
+        default_factory=get_default_max_results,
+        ge=10,
+        le=10000,
+        description="Maximum results per chemical",
     )
     include_reviews: bool = Field(True, description="Include review articles")
     use_cache: bool = Field(True, description="Use cached results when available")
