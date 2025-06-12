@@ -42,7 +42,7 @@ load_custom_css()
 setup_sidebar()
 
 
-def show_results_page():
+def show_results_page() -> None:
     """Display the search results page."""
     st.title("📊 Search Results")
 

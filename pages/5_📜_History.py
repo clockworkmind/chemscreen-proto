@@ -44,7 +44,7 @@ load_custom_css()
 setup_sidebar()
 
 
-def show_history_page():
+def show_history_page() -> None:
     """Display the search history page."""
     st.title("📜 Search History")
 

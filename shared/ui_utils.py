@@ -14,7 +14,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 from chemscreen.config import initialize_config
 
 
-def load_custom_css():
+def load_custom_css() -> None:
     """Load custom CSS styles."""
     config = initialize_config()
 
@@ -112,7 +112,7 @@ def load_custom_css():
     )
 
 
-def setup_sidebar():
+def setup_sidebar() -> None:
     """Configure the sidebar with settings and status (without navigation)."""
 
     with st.sidebar:

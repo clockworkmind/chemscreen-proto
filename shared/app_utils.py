@@ -25,7 +25,7 @@ from chemscreen.errors import (
 logger = logging.getLogger(__name__)
 
 
-def init_session_state():
+def init_session_state() -> None:
     """Initialize session state variables."""
     config = initialize_config()
 
@@ -47,7 +47,7 @@ def init_session_state():
         }
 
 
-def reset_session():
+def reset_session() -> None:
     """Reset session state to start over."""
     st.session_state.chemicals = []
     st.session_state.search_results = {}
@@ -57,7 +57,7 @@ def reset_session():
     st.rerun()
 
 
-def load_demo_data(size: str):
+def load_demo_data(size: str) -> None:
     """Load demo dataset into session state.
 
     Args:

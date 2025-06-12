@@ -16,7 +16,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 # Import ChemScreen modules
 from chemscreen.config import initialize_config
-from chemscreen.models import SearchParameters, BatchSearchSession
+from chemscreen.models import SearchParameters, BatchSearchSession, Chemical
 from chemscreen.pubmed import batch_search
 from chemscreen.session_manager import SessionManager
 from chemscreen.errors import (
@@ -55,7 +55,7 @@ load_custom_css()
 setup_sidebar()
 
 
-def show_search_page():
+def show_search_page() -> None:
     """Display the search configuration and execution page."""
     st.title("🔍 Search Configuration")
 
@@ -189,7 +189,7 @@ def show_search_page():
             chemicals_to_search = st.session_state.chemicals
 
             # Progress callback function
-            async def progress_callback(progress, chemical):
+            async def progress_callback(progress: float, chemical: Chemical) -> None:
                 if not cancel_button:
                     progress_bar.progress(progress)
                     status_text.text(f"🔍 Searching PubMed for: {chemical.name}")

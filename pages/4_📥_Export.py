@@ -4,6 +4,7 @@ Export page for ChemScreen multipage application.
 
 import streamlit as st
 from pathlib import Path
+from typing import Optional
 import sys
 import time
 import logging
@@ -50,7 +51,7 @@ load_custom_css()
 setup_sidebar()
 
 
-def show_export_page():
+def show_export_page() -> None:
     """Display the export page."""
     st.title("📥 Export Results")
 
@@ -166,6 +167,9 @@ def show_export_page():
             status_text.text("📄 Creating export file...")
             progress_bar.progress(0.7)
 
+            filepath: Optional[Path] = None
+            mime_type = "text/csv"
+
             if export_format == "CSV":
                 filepath = export_manager.export_to_csv(
                     results=results_with_metrics,
@@ -195,6 +199,10 @@ def show_export_page():
                     include_abstracts=include_abstracts,
                 )
                 mime_type = "text/csv"
+
+            if filepath is None:
+                st.error("❌ Failed to generate export file")
+                return
 
             status_text.text("✅ Export ready!")
             progress_bar.progress(1.0)

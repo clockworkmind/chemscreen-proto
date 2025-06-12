@@ -56,7 +56,7 @@ load_custom_css()
 setup_sidebar()
 
 
-def show_upload_page():
+def show_upload_page() -> None:
     """Display the chemical upload page."""
     st.title("📤 Upload Chemical List")
 

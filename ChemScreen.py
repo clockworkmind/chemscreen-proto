@@ -61,7 +61,7 @@ load_custom_css()
 setup_sidebar()
 
 
-def show_home_page():
+def show_home_page() -> None:
     """Display the home/welcome page."""
     st.title("🧪 ChemScreen - Chemical Literature Search Tool")
 
