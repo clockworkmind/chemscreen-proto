@@ -108,94 +108,95 @@ def reset_session():
 # Custom CSS for better styling
 def load_custom_css():
     """Load custom CSS styles."""
+    import re
+
+    # Sanitize primary color to prevent CSS injection
+    primary_color = config.theme_primary_color
+    if not re.match(r"^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$", primary_color):
+        primary_color = "#0066CC"  # Safe fallback
+
     st.markdown(
-        """
+        f"""
     <style>
     /* Main container styling */
-    .main {
+    .main {{
         padding-top: 2rem;
-    }
+    }}
 
     /* Header styling */
-    .stApp h1 {
-        color: """
-        + config.theme_primary_color
-        + """;
+    .stApp h1 {{
+        color: {primary_color};
         padding-bottom: 1rem;
         border-bottom: 2px solid #e0e0e0;
         margin-bottom: 2rem;
-    }
+    }}
 
     /* Sidebar styling */
-    .css-1d391kg {
+    .css-1d391kg {{
         background-color: #f8f9fa;
-    }
+    }}
 
     /* Button styling */
-    .stButton > button {
-        background-color: """
-        + config.theme_primary_color
-        + """;
+    .stButton > button {{
+        background-color: {primary_color};
         color: white;
         border: none;
         padding: 0.5rem 1rem;
         border-radius: 4px;
         font-weight: 500;
-    }
+    }}
 
-    .stButton > button:hover {
+    .stButton > button:hover {{
         background-color: #0052a3;
-    }
+    }}
 
     /* Success message styling */
-    .success-box {
+    .success-box {{
         background-color: #d4edda;
         border: 1px solid #c3e6cb;
         color: #155724;
         padding: 1rem;
         border-radius: 4px;
         margin: 1rem 0;
-    }
+    }}
 
     /* Warning message styling */
-    .warning-box {
+    .warning-box {{
         background-color: #fff3cd;
         border: 1px solid #ffeeba;
         color: #856404;
         padding: 1rem;
         border-radius: 4px;
         margin: 1rem 0;
-    }
+    }}
 
     /* Info box styling */
-    .info-box {
+    .info-box {{
         background-color: #e3f2fd;
         border: 1px solid #bbdefb;
         color: #1565c0;
         padding: 1rem;
         border-radius: 4px;
         margin: 1rem 0;
-    }
+    }}
 
     /* Progress bar custom styling */
-    .stProgress > div > div > div > div {
-        background-color: """
-        + config.theme_primary_color
-        + """;
-    }
+    .stProgress > div > div > div > div {{
+        background-color: {primary_color};
+    }}
 
     /* Table styling */
-    .dataframe {
+    .dataframe {{
         font-size: 14px;
-    }
+    }}
 
     /* File uploader styling */
-    .stFileUploader {
+    .stFileUploader {{
         border: 2px dashed #cccccc;
         border-radius: 4px;
         padding: 2rem;
         text-align: center;
-    }
+    }}
     </style>
     """,
         unsafe_allow_html=True,
@@ -676,6 +677,7 @@ def show_upload_page():
                         if st.button(
                             "⏮️ First", disabled=page_num == 1, use_container_width=True
                         ):
+                            st.session_state.preview_page_selector = 1
                             st.rerun()
                     with nav_col2:
                         if st.button(
@@ -683,6 +685,7 @@ def show_upload_page():
                             disabled=page_num == 1,
                             use_container_width=True,
                         ):
+                            st.session_state.preview_page_selector = page_num - 1
                             st.rerun()
                     with nav_col3:
                         st.markdown(
@@ -695,6 +698,7 @@ def show_upload_page():
                             disabled=page_num == total_pages,
                             use_container_width=True,
                         ):
+                            st.session_state.preview_page_selector = page_num + 1
                             st.rerun()
                     with nav_col5:
                         if st.button(
@@ -702,6 +706,7 @@ def show_upload_page():
                             disabled=page_num == total_pages,
                             use_container_width=True,
                         ):
+                            st.session_state.preview_page_selector = total_pages
                             st.rerun()
                 else:
                     preview_df = df
@@ -1107,29 +1112,42 @@ def show_search_page():
 
             # TODO: Integrate cache manager with batch_search function
 
-            # Get search parameters
-            date_range_years = st.session_state.get("date_range", 10)
-            max_results = st.session_state.get("max_results", 100)
-            include_reviews = st.session_state.get("include_reviews", True)
+            # Get search parameters from settings
+            search_settings = st.session_state.settings
+            date_range_years = search_settings["date_range_years"]
+            max_results = search_settings["max_results_per_chemical"]
+            include_reviews = search_settings["include_reviews"]
             api_key = config.pubmed_api_key
 
             # Enhanced loading states
             with st.spinner("Initializing search..."):
                 time.sleep(1)
 
+            # Reset cancellation state for new search
+            st.session_state.search_cancelled = False
+
             # Create progress with cancel functionality
             progress_bar, status_text, cancel_button, progress_container = (
                 create_progress_with_cancel("Searching chemicals")
             )
+
+            # Handle cancellation
+            if cancel_button:
+                st.session_state.search_cancelled = True
+                st.warning("⏸️ Search cancelled by user")
+                st.stop()
 
             # Get all chemicals to search
             chemicals_to_search = st.session_state.chemicals
 
             # Progress callback function
             async def progress_callback(progress, chemical):
-                if not cancel_button:
-                    progress_bar.progress(progress)
-                    status_text.text(f"🔍 Searching PubMed for: {chemical.name}")
+                # Check for cancellation
+                if st.session_state.get("search_cancelled", False):
+                    raise asyncio.CancelledError("Search cancelled by user")
+
+                progress_bar.progress(progress)
+                status_text.text(f"🔍 Searching PubMed for: {chemical.name}")
 
             try:
                 # Run the async batch search
@@ -1198,6 +1216,13 @@ def show_search_page():
                     f"Batch search completed! Batch ID: {st.session_state.current_batch_id}",
                     stats,
                 )
+
+            except asyncio.CancelledError:
+                progress_container.empty()
+                st.warning("⏸️ Search was cancelled by user")
+                # Reset cancellation state
+                st.session_state.search_cancelled = False
+                st.stop()
 
             except Exception as e:
                 progress_container.empty()

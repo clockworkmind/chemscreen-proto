@@ -10,7 +10,6 @@ import tempfile
 import psutil
 import os
 from pathlib import Path
-from typing import Dict
 import pytest
 
 from chemscreen.models import (
@@ -41,7 +40,7 @@ class PerformanceMonitor:
         self.start_time = time.time()
         self.start_memory = self.process.memory_info().rss / 1024 / 1024  # MB
 
-    def stop(self) -> Dict[str, float]:
+    def stop(self) -> dict[str, float]:
         """Stop monitoring and return metrics."""
         end_time = time.time()
         end_memory = self.process.memory_info().rss / 1024 / 1024  # MB

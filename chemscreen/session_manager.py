@@ -4,7 +4,7 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional, Dict, Any
+from typing import Optional, Any
 
 from chemscreen.models import BatchSearchSession
 from chemscreen.config import get_config, Config
@@ -101,7 +101,7 @@ class SessionManager:
             logger.error(f"Failed to load session {session_id}: {e}")
             return None
 
-    def list_sessions(self) -> List[Dict[str, Any]]:
+    def list_sessions(self) -> list[dict[str, Any]]:
         """
         List all available sessions.
 
@@ -115,7 +115,7 @@ class SessionManager:
             with open(self.index_file, "r", encoding="utf-8") as f:
                 index_data = json.load(f)
 
-            sessions: List[Dict[str, Any]] = index_data.get("sessions", [])
+            sessions: list[dict[str, Any]] = index_data.get("sessions", [])
 
             # Sort by creation date (newest first)
             sessions.sort(key=lambda x: x.get("created_at", ""), reverse=True)
@@ -191,9 +191,11 @@ class SessionManager:
             index_data["sessions"].append(session_metadata)
             index_data["last_updated"] = datetime.now().isoformat()
 
-            # Save updated index
-            with open(self.index_file, "w", encoding="utf-8") as f:
+            # Save updated index atomically
+            temp_filepath = self.index_file.with_suffix(".json.tmp")
+            with open(temp_filepath, "w", encoding="utf-8") as f:
                 json.dump(index_data, f, indent=2)
+            temp_filepath.rename(self.index_file)
 
         except Exception as e:
             logger.error(f"Failed to update session index: {e}")
@@ -213,9 +215,11 @@ class SessionManager:
             ]
             index_data["last_updated"] = datetime.now().isoformat()
 
-            # Save updated index
-            with open(self.index_file, "w", encoding="utf-8") as f:
+            # Save updated index atomically
+            temp_filepath = self.index_file.with_suffix(".json.tmp")
+            with open(temp_filepath, "w", encoding="utf-8") as f:
                 json.dump(index_data, f, indent=2)
+            temp_filepath.rename(self.index_file)
 
         except Exception as e:
             logger.error(f"Failed to remove session from index: {e}")

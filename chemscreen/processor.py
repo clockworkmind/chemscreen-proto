@@ -1,7 +1,7 @@
 """Chemical processor module for validation and standardization."""
 
 import re
-from typing import List, Optional, Tuple, Dict, Any
+from typing import Optional, Any
 import logging
 import pandas as pd
 from io import StringIO
@@ -73,10 +73,10 @@ def standardize_chemical_name(name: str) -> str:
 
 
 def parse_chemical_list(
-    data: List[dict],
+    data: list[dict],
     name_column: Optional[str] = None,
     cas_column: Optional[str] = None,
-) -> List[Chemical]:
+) -> list[Chemical]:
     """
     Parse a list of chemical data into Chemical objects.
 
@@ -86,7 +86,7 @@ def parse_chemical_list(
         cas_column: Column name for CAS numbers
 
     Returns:
-        List[Chemical]: Parsed and validated chemicals
+        list[Chemical]: Parsed and validated chemicals
     """
     chemicals = []
 
@@ -141,7 +141,7 @@ def parse_chemical_list(
     return chemicals
 
 
-def detect_duplicates(chemicals: List[Chemical]) -> List[Tuple[int, int]]:
+def detect_duplicates(chemicals: list[Chemical]) -> list[tuple[int, int]]:
     """
     Detect duplicate chemicals using vectorized operations for better performance.
 
@@ -188,7 +188,7 @@ def detect_duplicates(chemicals: List[Chemical]) -> List[Tuple[int, int]]:
     return duplicates
 
 
-def merge_duplicates(chemicals: List[Chemical]) -> List[Chemical]:
+def merge_duplicates(chemicals: list[Chemical]) -> list[Chemical]:
     """
     Merge duplicate chemicals, preserving all information.
 
@@ -196,7 +196,7 @@ def merge_duplicates(chemicals: List[Chemical]) -> List[Chemical]:
         chemicals: List of Chemical objects
 
     Returns:
-        List[Chemical]: Deduplicated list
+        list[Chemical]: Deduplicated list
     """
     # Find duplicates
     duplicates = detect_duplicates(chemicals)
@@ -235,7 +235,7 @@ CHEMICAL_ABBREVIATIONS = {
 }
 
 
-def expand_abbreviations(name: str) -> Tuple[str, List[str]]:
+def expand_abbreviations(name: str) -> tuple[str, list[str]]:
     """
     Expand common chemical abbreviations to full names.
 
@@ -284,7 +284,7 @@ def process_csv_data(
             # Convert idx to int for arithmetic operations
             row_num = int(str(idx)) + 1
             # Extract data based on column mapping
-            chemical_data: Dict[str, Any] = {}
+            chemical_data: dict[str, Any] = {}
 
             # Name (required if no CAS)
             if column_mapping.name_column:
@@ -338,7 +338,7 @@ def process_csv_data(
                 )
                 if expanded_name != chemical_data["name"]:
                     chemical_data["name"] = expanded_name
-                    existing_synonyms: List[str] = chemical_data.get("synonyms", [])
+                    existing_synonyms: list[str] = chemical_data.get("synonyms", [])
                     chemical_data["synonyms"] = list(
                         set(existing_synonyms + abbrev_synonyms)
                     )
@@ -401,7 +401,7 @@ def process_csv_data(
 
 def validate_csv_file(
     file_content: str, delimiter: str = ",", encoding: str = "utf-8"
-) -> Tuple[bool, Optional[pd.DataFrame], Optional[str]]:
+) -> tuple[bool, Optional[pd.DataFrame], Optional[str]]:
     """
     Validate CSV file format and structure.
 
