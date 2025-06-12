@@ -303,7 +303,7 @@ def log_error_for_support(error: Exception, context: str | None = None) -> None:
     """
     error_details = {
         "error_type": type(error).__name__,
-        "message": str(error),
+        "error_message": str(error),
         "context": context,
     }
 
