@@ -1,14 +1,15 @@
 """PubMed E-utilities API client for literature searches."""
 
 import asyncio
-import aiohttp
 import logging
-from datetime import datetime, timedelta
-from typing import Optional, Any
 import xml.etree.ElementTree as ET
+from datetime import datetime, timedelta
+from typing import Any, Optional
 
+import aiohttp
+
+from chemscreen.config import Config, get_config
 from chemscreen.models import Chemical, Publication, SearchResult
-from chemscreen.config import get_config, Config
 
 logger = logging.getLogger(__name__)
 
@@ -126,9 +127,7 @@ class PubMedClient:
 
         try:
             # Build search query
-            query = self._build_search_query(
-                chemical, date_range_years, include_reviews
-            )
+            query = self._build_search_query(chemical, date_range_years, include_reviews)
 
             # Search for PMIDs
             pmids, total_count = await self._esearch(query, max_results)
@@ -271,9 +270,7 @@ class PubMedClient:
 
             # Title
             title_elem = article.find(".//ArticleTitle")
-            title = (
-                title_elem.text if title_elem is not None and title_elem.text else ""
-            )
+            title = title_elem.text if title_elem is not None and title_elem.text else ""
 
             # Authors
             authors = []
@@ -294,9 +291,7 @@ class PubMedClient:
 
             # Year
             pub_date = article.find(".//PubDate/Year")
-            year = (
-                int(pub_date.text) if pub_date is not None and pub_date.text else None
-            )
+            year = int(pub_date.text) if pub_date is not None and pub_date.text else None
 
             # Abstract
             abstract_elem = article.find(".//Abstract/AbstractText")

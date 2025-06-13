@@ -2,38 +2,40 @@
 Search page for ChemScreen multipage application.
 """
 
-import streamlit as st
-from pathlib import Path
-import sys
-import pandas as pd
 import asyncio
-import time
 import logging
+import sys
+import time
 from datetime import datetime
+from pathlib import Path
+from typing import Any
+
+import pandas as pd
+import streamlit as st
 
 # Add the project root to the path
 sys.path.append(str(Path(__file__).parent.parent))
 
 # Import ChemScreen modules
 from chemscreen.config import initialize_config
-from chemscreen.models import SearchParameters, BatchSearchSession, Chemical
+from chemscreen.errors import (
+    log_error_for_support,
+    show_error_with_help,
+)
+from chemscreen.models import BatchSearchSession, Chemical, SearchParameters
 from chemscreen.pubmed import batch_search
 from chemscreen.session_manager import SessionManager
-from chemscreen.errors import (
-    show_error_with_help,
-    log_error_for_support,
-)
+from shared.app_utils import init_session_state
 
 # Import shared utilities
 from shared.ui_utils import (
+    create_progress_with_cancel,
+    get_feature_help,
     load_custom_css,
     setup_sidebar,
-    create_progress_with_cancel,
-    show_success_with_stats,
     show_help_tooltip,
-    get_feature_help,
+    show_success_with_stats,
 )
-from shared.app_utils import init_session_state
 
 # Initialize configuration and logging
 config = initialize_config()
@@ -127,9 +129,7 @@ def show_search_page() -> None:
 
         # API key status
         st.subheader("API Configuration")
-        api_key_status = (
-            "✅ Configured" if config.pubmed_api_key else "❌ Not configured"
-        )
+        api_key_status = "✅ Configured" if config.pubmed_api_key else "❌ Not configured"
         st.markdown(f"**PubMed API Key**: {api_key_status}")
 
         if api_key_status == "❌ Not configured":
@@ -179,6 +179,10 @@ def show_search_page() -> None:
                 time.sleep(1)
 
             # Create progress with cancel functionality
+            progress_bar: Any
+            status_text: Any
+            cancel_button: Any
+            progress_container: Any
             progress_bar, status_text, cancel_button, progress_container = (
                 create_progress_with_cancel("Searching chemicals")
             )
@@ -188,7 +192,7 @@ def show_search_page() -> None:
 
             # Progress callback function
             async def progress_callback(progress: float, chemical: Chemical) -> None:
-                if not cancel_button:
+                if not bool(cancel_button):
                     progress_bar.progress(progress)
                     status_text.text(f"🔍 Searching PubMed for: {chemical.name}")
 
@@ -246,9 +250,7 @@ def show_search_page() -> None:
                     # Don't fail the search if session saving fails
 
                 # Calculate real stats
-                total_papers = sum(
-                    len(result.publications) for result in search_results
-                )
+                total_papers = sum(len(result.publications) for result in search_results)
                 stats = {
                     "Chemicals Searched": len(chemicals_to_search),
                     "Papers Found": total_papers,

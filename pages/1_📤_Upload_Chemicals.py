@@ -5,6 +5,7 @@ Upload Chemicals page for ChemScreen multipage application.
 import logging
 import sys
 from pathlib import Path
+from typing import Any
 
 import pandas as pd
 import streamlit as st
@@ -321,6 +322,10 @@ def show_upload_page() -> None:
 
                     if st.button("Process Chemicals", type="primary"):
                         # Create progress indicators with cancel option
+                        progress_bar: Any
+                        status_text: Any
+                        cancel_button: Any
+                        progress_container: Any
                         progress_bar, status_text, cancel_button, progress_container = (
                             create_progress_with_cancel("Processing chemicals")
                         )
@@ -337,13 +342,12 @@ def show_upload_page() -> None:
                             progress_bar.progress(0.1)
 
                             # Check for cancellation
-                            if cancel_button:
+                            if bool(cancel_button):
                                 st.warning("⏸️ Processing cancelled by user")
                                 progress_container.empty()
                                 return
 
                             # Initial validation and batch size check
-                            MAX_BATCH_SIZE = config.max_batch_size
                             if len(df) > MAX_BATCH_SIZE:
                                 show_error_with_help(
                                     "batch_too_large",
