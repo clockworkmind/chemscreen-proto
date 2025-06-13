@@ -2,22 +2,23 @@
 Results page for ChemScreen multipage application.
 """
 
-import streamlit as st
-from pathlib import Path
-import sys
-import pandas as pd
 import logging
+import sys
+from pathlib import Path
+
+import pandas as pd
+import streamlit as st
 
 # Add the project root to the path
 sys.path.append(str(Path(__file__).parent.parent))
 
 # Import ChemScreen modules
-from chemscreen.config import initialize_config
 from chemscreen.analyzer import calculate_quality_metrics
+from chemscreen.config import initialize_config
+from shared.app_utils import init_session_state
 
 # Import shared utilities
 from shared.ui_utils import load_custom_css, setup_sidebar
-from shared.app_utils import init_session_state
 
 # Initialize configuration and logging
 config = initialize_config()
@@ -52,9 +53,7 @@ def show_results_page() -> None:
         return
 
     # Calculate real summary statistics
-    total_chemicals = (
-        len(st.session_state.chemicals) if st.session_state.chemicals else 0
-    )
+    total_chemicals = len(st.session_state.chemicals) if st.session_state.chemicals else 0
     search_results = st.session_state.search_results
     successful_searches = len([r for r in search_results if not r.error])
     failed_searches = len([r for r in search_results if r.error])
@@ -124,9 +123,7 @@ def show_results_page() -> None:
     # Results Analysis
     st.subheader("📈 Results Analysis")
 
-    tab1, tab2, tab3 = st.tabs(
-        ["Quality Distribution", "Summary Stats", "High Priority"]
-    )
+    tab1, tab2, tab3 = st.tabs(["Quality Distribution", "Summary Stats", "High Priority"])
 
     with tab1:
         if not results_df.empty:
@@ -220,9 +217,7 @@ def show_results_page() -> None:
                     hide_index=True,
                 )
             else:
-                st.info(
-                    "No high priority chemicals identified based on current criteria"
-                )
+                st.info("No high priority chemicals identified based on current criteria")
         else:
             st.info("No priority analysis available")
 

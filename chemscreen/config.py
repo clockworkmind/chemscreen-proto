@@ -3,6 +3,7 @@
 import os
 from pathlib import Path
 from typing import Optional
+
 from dotenv import load_dotenv
 
 
@@ -43,9 +44,7 @@ class Config:
 
         # Batch Processing
         self.max_batch_size = int(os.getenv("MAX_BATCH_SIZE", "200"))
-        self.max_results_per_chemical = int(
-            os.getenv("MAX_RESULTS_PER_CHEMICAL", "100")
-        )
+        self.max_results_per_chemical = int(os.getenv("MAX_RESULTS_PER_CHEMICAL", "100"))
         self.default_date_range_years = int(os.getenv("DEFAULT_DATE_RANGE_YEARS", "10"))
 
         # Directory Configuration
@@ -94,9 +93,9 @@ class Config:
 
         # Security
         self.max_upload_size_mb = int(os.getenv("MAX_UPLOAD_SIZE_MB", "10"))
-        self.allowed_file_extensions = os.getenv(
-            "ALLOWED_FILE_EXTENSIONS", "csv"
-        ).split(",")
+        self.allowed_file_extensions = os.getenv("ALLOWED_FILE_EXTENSIONS", "csv").split(
+            ","
+        )
 
         # UI Configuration
         self.page_title = os.getenv(

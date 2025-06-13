@@ -5,26 +5,27 @@ meets the expected performance requirements for different batch sizes.
 """
 
 import csv
-import time
-import tempfile
-import psutil
 import os
+import tempfile
+import time
 from pathlib import Path
+
+import pandas as pd
+import psutil
 import pytest
 
-from chemscreen.models import (
-    Chemical,
-    SearchResult,
-    BatchSearchSession,
-    SearchParameters,
-)
 from chemscreen.analyzer import calculate_quality_metrics
-from chemscreen.exporter import ExportManager
-from chemscreen.session_manager import SessionManager
 from chemscreen.cache import CacheManager
+from chemscreen.exporter import ExportManager
+from chemscreen.models import (
+    BatchSearchSession,
+    Chemical,
+    CSVColumnMapping,
+    SearchParameters,
+    SearchResult,
+)
 from chemscreen.processor import process_csv_data
-from chemscreen.models import CSVColumnMapping
-import pandas as pd
+from chemscreen.session_manager import SessionManager
 
 
 class PerformanceMonitor:
@@ -67,9 +68,7 @@ class TestPerformanceBaselines:
         """Provide performance monitoring."""
         return PerformanceMonitor()
 
-    def create_test_csv(
-        self, temp_dir: Path, num_chemicals: int, filename: str
-    ) -> Path:
+    def create_test_csv(self, temp_dir: Path, num_chemicals: int, filename: str) -> Path:
         """Create test CSV file with specified number of chemicals."""
         csv_file = temp_dir / filename
 
@@ -195,8 +194,7 @@ class TestPerformanceBaselines:
         """Baseline: Quality analysis for batch results."""
         # Create mock results
         chemicals = [
-            Chemical(name=f"Chemical_{i}", cas_number=f"{i:06d}-00-0")
-            for i in range(50)
+            Chemical(name=f"Chemical_{i}", cas_number=f"{i:06d}-00-0") for i in range(50)
         ]
 
         mock_results = []
@@ -238,8 +236,7 @@ class TestPerformanceBaselines:
 
         # Create test data
         chemicals = [
-            Chemical(name=f"Chemical_{i}", cas_number=f"{i:06d}-00-0")
-            for i in range(20)
+            Chemical(name=f"Chemical_{i}", cas_number=f"{i:06d}-00-0") for i in range(20)
         ]
         results = []
 
@@ -297,8 +294,7 @@ class TestPerformanceBaselines:
         """Baseline: CSV export performance."""
         # Create test session and results
         chemicals = [
-            Chemical(name=f"Chemical_{i}", cas_number=f"{i:06d}-00-0")
-            for i in range(50)
+            Chemical(name=f"Chemical_{i}", cas_number=f"{i:06d}-00-0") for i in range(50)
         ]
 
         mock_results = []
@@ -355,8 +351,7 @@ class TestPerformanceBaselines:
         """Baseline: Excel export performance."""
         # Create test data (smaller for Excel due to complexity)
         chemicals = [
-            Chemical(name=f"Chemical_{i}", cas_number=f"{i:06d}-00-0")
-            for i in range(25)
+            Chemical(name=f"Chemical_{i}", cas_number=f"{i:06d}-00-0") for i in range(25)
         ]
 
         mock_results = []
@@ -417,8 +412,7 @@ class TestPerformanceBaselines:
         sessions = []
         for i in range(10):
             chemicals = [
-                Chemical(name=f"Chem_{j}", cas_number=f"{j:06d}-00-0")
-                for j in range(10)
+                Chemical(name=f"Chem_{j}", cas_number=f"{j:06d}-00-0") for j in range(10)
             ]
             session = BatchSearchSession(
                 batch_id=f"perf_session_{i:03d}",
@@ -662,9 +656,7 @@ class TestPerformanceRegression:
         assert total_time < 10.0, (
             f"Concurrent operations took {total_time:.2f}s (expected <10.0s)"
         )
-        assert memory_usage < 100, (
-            f"Memory usage {memory_usage:.1f}MB (expected <100MB)"
-        )
+        assert memory_usage < 100, f"Memory usage {memory_usage:.1f}MB (expected <100MB)"
 
         print("\n📊 Concurrent Operations (5 batches × 10 chemicals):")
         print(f"   ⏱️  Time: {total_time:.3f}s")

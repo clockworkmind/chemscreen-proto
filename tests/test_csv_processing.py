@@ -2,17 +2,17 @@
 
 import pandas as pd
 
-from chemscreen.processor import (
-    validate_cas_number,
-    standardize_chemical_name,
-    expand_abbreviations,
-    process_csv_data,
-    validate_csv_file,
-    suggest_column_mapping,
-    detect_duplicates,
-    merge_duplicates,
-)
 from chemscreen.models import Chemical, CSVColumnMapping
+from chemscreen.processor import (
+    detect_duplicates,
+    expand_abbreviations,
+    merge_duplicates,
+    process_csv_data,
+    standardize_chemical_name,
+    suggest_column_mapping,
+    validate_cas_number,
+    validate_csv_file,
+)
 
 
 class TestCASValidation:

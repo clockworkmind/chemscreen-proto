@@ -1,11 +1,11 @@
 """Analyzer module for quality scoring and trend analysis."""
 
+import logging
+from collections import Counter
 from datetime import datetime
 from typing import Any
-from collections import Counter
-import logging
 
-from chemscreen.models import SearchResult, QualityMetrics, Publication
+from chemscreen.models import Publication, QualityMetrics, SearchResult
 
 logger = logging.getLogger(__name__)
 
