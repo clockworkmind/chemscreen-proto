@@ -166,7 +166,7 @@ class PubMedClient:
                 search_time_seconds=asyncio.get_event_loop().time() - start_time,
                 from_cache=False,
             )
-        except aiohttp.ClientTimeout as e:
+        except asyncio.TimeoutError as e:
             logger.error(f"Timeout error for {chemical.name}: {str(e)}")
             return SearchResult(
                 chemical=chemical,
