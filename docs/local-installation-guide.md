@@ -382,10 +382,7 @@ find data/processed/ -name "*.xlsx" -mtime +30 -delete
    ```env
    REQUEST_TIMEOUT=60
    ```
-4. **Reduce request rate**:
-   ```env
-   RATE_LIMIT_DELAY=1.0
-   ```
+4. **Note**: Request rate is automatically managed based on API key presence
 
 ### Getting Help
 

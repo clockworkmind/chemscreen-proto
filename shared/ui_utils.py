@@ -4,6 +4,7 @@ UI utilities for ChemScreen multipage application.
 Contains functions for CSS styling, sidebar setup, and other UI components.
 """
 
+import re
 import sys
 from pathlib import Path
 from typing import Any, Tuple
@@ -20,6 +21,11 @@ def load_custom_css() -> None:
     """Load custom CSS styles."""
     config = initialize_config()
 
+    # Sanitize the primary color to prevent CSS injection
+    primary_color = config.theme_primary_color
+    if not re.match(r"^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$", primary_color):
+        primary_color = "#0066CC"  # Fallback to a safe default
+
     st.markdown(
         """
     <style>
@@ -31,7 +37,7 @@ def load_custom_css() -> None:
     /* Header styling */
     .stApp h1 {
         color: """
-        + config.theme_primary_color
+        + primary_color
         + """;
         padding-bottom: 1rem;
         border-bottom: 2px solid #e0e0e0;
@@ -46,7 +52,7 @@ def load_custom_css() -> None:
     /* Button styling */
     .stButton > button {
         background-color: """
-        + config.theme_primary_color
+        + primary_color
         + """;
         color: white;
         border: none;
@@ -92,7 +98,7 @@ def load_custom_css() -> None:
     /* Progress bar custom styling */
     .stProgress > div > div > div > div {
         background-color: """
-        + config.theme_primary_color
+        + primary_color
         + """;
     }
 

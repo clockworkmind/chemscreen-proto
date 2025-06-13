@@ -4,7 +4,7 @@ import re
 from datetime import datetime
 from typing import Any, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 def get_default_max_results() -> int:
@@ -205,15 +205,13 @@ class CSVColumnMapping(BaseModel):
     synonyms_column: Optional[str] = Field(None, description="Column for synonyms")
     notes_column: Optional[str] = Field(None, description="Column for notes")
 
-    @field_validator("name_column", "cas_column")
-    @classmethod
-    def at_least_one_required(cls, v: Optional[str], info: Any) -> Optional[str]:
+    @model_validator(mode="after")
+    def check_at_least_one_identifier(self) -> "CSVColumnMapping":
         """Ensure at least name or CAS column is specified."""
-        if info.field_name == "cas_column" and v is None:
-            if info.data.get("name_column") is None:
-                raise ValueError(
-                    "At least one of name_column or cas_column must be specified"
-                )
-        return v
+        if self.name_column is None and self.cas_column is None:
+            raise ValueError(
+                "At least one of name_column or cas_column must be specified."
+            )
+        return self
 
     model_config = ConfigDict(validate_assignment=True)

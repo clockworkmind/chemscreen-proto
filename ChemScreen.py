@@ -229,7 +229,4 @@ def show_home_page() -> None:
 
 
 # Main execution
-if __name__ == "__main__":
-    show_home_page()
-else:
-    show_home_page()
+show_home_page()

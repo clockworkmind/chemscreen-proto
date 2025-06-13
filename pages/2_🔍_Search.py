@@ -164,9 +164,15 @@ def show_search_page() -> None:
 
     col1, col2, col3 = st.columns([1, 1, 2])
 
+    # Initialize cancellation flag
+    if "search_cancelled" not in st.session_state:
+        st.session_state.search_cancelled = False
+
     with col1:
         if st.button("🚀 Start Search", type="primary", use_container_width=True):
             st.session_state.current_batch_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+            # Reset cancellation flag at the start of a new search
+            st.session_state.search_cancelled = False
 
             # Get search parameters from UI inputs
             date_range_years = _date_range
@@ -181,20 +187,29 @@ def show_search_page() -> None:
             # Create progress with cancel functionality
             progress_bar: Any
             status_text: Any
-            cancel_button: Any
+            cancel_button_placeholder: Any
             progress_container: Any
-            progress_bar, status_text, cancel_button, progress_container = (
+            progress_bar, status_text, cancel_button_placeholder, progress_container = (
                 create_progress_with_cancel("Searching chemicals")
             )
+
+            # Add cancel button that sets session state
+            cancel_col1, cancel_col2, cancel_col3 = st.columns([1, 1, 2])
+            with cancel_col1:
+                if st.button("⏸️ Cancel Search", key="cancel_search_button"):
+                    st.session_state.search_cancelled = True
+                    st.warning("Cancellation requested. Finishing current chemical...")
 
             # Get all chemicals to search
             chemicals_to_search = st.session_state.chemicals
 
             # Progress callback function
             async def progress_callback(progress: float, chemical: Chemical) -> None:
-                if not bool(cancel_button):
-                    progress_bar.progress(progress)
-                    status_text.text(f"🔍 Searching PubMed for: {chemical.name}")
+                if st.session_state.search_cancelled:
+                    raise asyncio.CancelledError("Search cancelled by user.")
+
+                progress_bar.progress(progress)
+                status_text.text(f"🔍 Searching PubMed for: {chemical.name}")
 
             try:
                 # Run the async batch search
@@ -267,6 +282,9 @@ def show_search_page() -> None:
                 if st.button("📊 View Results", type="primary"):
                     st.switch_page("pages/3_📊_Results.py")
 
+            except asyncio.CancelledError:
+                st.warning("Search was successfully cancelled.")
+                progress_container.empty()
             except Exception as e:
                 progress_container.empty()
 

@@ -2,11 +2,11 @@
 
 import asyncio
 import logging
-import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta
 from typing import Any, Optional
 
 import aiohttp
+from defusedxml import ElementTree as ET
 
 from chemscreen.config import Config, get_config
 from chemscreen.models import Chemical, Publication, SearchResult

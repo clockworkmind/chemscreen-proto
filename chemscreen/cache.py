@@ -118,8 +118,20 @@ class CacheManager:
             logger.info(f"Cache hit for {chemical.name}")
             return result
 
-        except Exception as e:
-            logger.error(f"Cache read error for {chemical.name}: {str(e)}")
+        except (IOError, OSError) as e:
+            logger.error(f"Cache file read error for {chemical.name}: {str(e)}")
+            return None
+        except json.JSONDecodeError as e:
+            logger.error(f"Cache JSON decode error for {chemical.name}: {str(e)}")
+            # Optionally remove the corrupted cache file
+            try:
+                cache_path.unlink()
+                logger.info(f"Removed corrupted cache file for {chemical.name}")
+            except OSError:
+                pass
+            return None
+        except (KeyError, TypeError) as e:
+            logger.error(f"Cache deserialization error for {chemical.name}: {str(e)}")
             return None
 
     def save(
@@ -160,8 +172,13 @@ class CacheManager:
             logger.info(f"Cached results for {result.chemical.name}")
             return True
 
-        except Exception as e:
-            logger.error(f"Cache save error for {result.chemical.name}: {str(e)}")
+        except (IOError, OSError) as e:
+            logger.error(f"Cache file write error for {result.chemical.name}: {str(e)}")
+            return False
+        except (TypeError, ValueError) as e:
+            logger.error(
+                f"Cache serialization error for {result.chemical.name}: {str(e)}"
+            )
             return False
 
     def clear(self) -> int:

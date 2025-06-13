@@ -46,17 +46,11 @@ class SessionManager:
         filepath = self.session_dir / filename
 
         try:
-            # Convert session to dict and save
-            session_data = session.model_dump()
-
-            # Handle datetime serialization
-            def serialize_datetime(obj: Any) -> str:
-                if isinstance(obj, datetime):
-                    return obj.isoformat()
-                raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
+            # Convert session to JSON-compatible dict using Pydantic's built-in functionality
+            session_data = session.model_dump(mode="json")
 
             with open(filepath, "w", encoding="utf-8") as f:
-                json.dump(session_data, f, indent=2, default=serialize_datetime)
+                json.dump(session_data, f, indent=2)
 
             # Update session index
             self._update_session_index(session, filepath)

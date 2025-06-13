@@ -38,7 +38,6 @@ class Config:
         self.pubmed_tool_name = os.getenv("PUBMED_TOOL_NAME", "ChemScreen")
 
         # Rate Limiting
-        self.rate_limit_delay = float(os.getenv("RATE_LIMIT_DELAY", "0.35"))
         self.request_timeout = int(os.getenv("REQUEST_TIMEOUT", "30"))
         self.max_retries = int(os.getenv("MAX_RETRIES", "3"))
 
@@ -163,11 +162,7 @@ class Config:
                 f"MAX_BATCH_SIZE ({self.max_batch_size}) is very large - may cause memory issues"
             )
 
-        # Check rate limit configuration
-        if self.rate_limit_delay < 0.1:
-            warnings.append(
-                f"RATE_LIMIT_DELAY ({self.rate_limit_delay}) is very low - may trigger rate limits"
-            )
+        # Rate limiting is now automatically managed based on API key presence
 
         # Check memory limits
         if self.memory_limit_mb < 256:
@@ -188,7 +183,7 @@ class Config:
             "pubmed_api_key_configured": bool(self.pubmed_api_key),
             "pubmed_email_configured": bool(self.pubmed_email),
             "pubmed_tool_name": self.pubmed_tool_name,
-            "rate_limit_delay": self.rate_limit_delay,
+            "api_rate_limit": self.get_api_rate_limit(),
             "request_timeout": self.request_timeout,
             "max_retries": self.max_retries,
             "max_batch_size": self.max_batch_size,
