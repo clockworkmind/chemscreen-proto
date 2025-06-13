@@ -4,6 +4,7 @@ import asyncio
 import logging
 from datetime import datetime, timedelta
 from typing import Any, Optional
+from xml.etree.ElementTree import Element  # For type hints only
 
 import aiohttp
 from defusedxml import ElementTree as ET
@@ -284,7 +285,7 @@ class PubMedClient:
 
         return publications
 
-    def _extract_publication(self, article_elem: ET.Element) -> Optional[Publication]:
+    def _extract_publication(self, article_elem: Element) -> Optional[Publication]:
         """Extract publication data from XML element."""
         try:
             # Extract PMID
