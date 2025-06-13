@@ -9,7 +9,7 @@ from typing import Any, Optional
 
 try:
     import openpyxl
-    from openpyxl.styles import Font, PatternFill, Alignment
+    from openpyxl.styles import Alignment, Font, PatternFill
     from openpyxl.utils import get_column_letter
 
     EXCEL_AVAILABLE = True
@@ -18,8 +18,8 @@ except ImportError:
     logger = logging.getLogger(__name__)
     logger.warning("openpyxl not available, Excel export disabled")
 
-from chemscreen.models import SearchResult, QualityMetrics, BatchSearchSession
-from chemscreen.config import get_config, Config
+from chemscreen.config import Config, get_config
+from chemscreen.models import BatchSearchSession, QualityMetrics, SearchResult
 
 logger = logging.getLogger(__name__)
 
@@ -81,9 +81,7 @@ class ExportManager:
             ]
 
             if include_abstracts:
-                fields.extend(
-                    ["PMID", "Title", "Authors", "Journal", "Year", "Abstract"]
-                )
+                fields.extend(["PMID", "Title", "Authors", "Journal", "Year", "Abstract"])
 
             writer = csv.DictWriter(f, fieldnames=fields)
             writer.writeheader()
@@ -269,9 +267,7 @@ class ExportManager:
             if result.publications:
                 for pub in result.publications:
                     ws.cell(row=row_num, column=1, value=result.chemical.name)
-                    ws.cell(
-                        row=row_num, column=2, value=result.chemical.cas_number or ""
-                    )
+                    ws.cell(row=row_num, column=2, value=result.chemical.cas_number or "")
                     ws.cell(row=row_num, column=3, value=pub.pmid)
                     ws.cell(row=row_num, column=4, value=pub.title)
                     ws.cell(
@@ -299,9 +295,7 @@ class ExportManager:
                 ws.cell(
                     row=row_num,
                     column=3,
-                    value="No results"
-                    if not result.error
-                    else f"Error: {result.error}",
+                    value="No results" if not result.error else f"Error: {result.error}",
                 )
                 row_num += 1
 

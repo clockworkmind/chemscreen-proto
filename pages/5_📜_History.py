@@ -2,24 +2,25 @@
 History page for ChemScreen multipage application.
 """
 
-import streamlit as st
-from pathlib import Path
-import sys
-import pandas as pd
 import logging
+import sys
 from datetime import datetime
+from pathlib import Path
+
+import pandas as pd
+import streamlit as st
 
 # Add the project root to the path
 sys.path.append(str(Path(__file__).parent.parent))
 
 # Import ChemScreen modules
 from chemscreen.config import initialize_config
-from chemscreen.session_manager import SessionManager
 from chemscreen.errors import show_error_with_help
+from chemscreen.session_manager import SessionManager
+from shared.app_utils import init_session_state
 
 # Import shared utilities
 from shared.ui_utils import load_custom_css, setup_sidebar
-from shared.app_utils import init_session_state
 
 # Initialize configuration and logging
 config = initialize_config()
@@ -57,9 +58,7 @@ def show_history_page() -> None:
     sessions = session_manager.list_sessions()
 
     if not sessions:
-        st.info(
-            "No search history available. Run a search to create your first session."
-        )
+        st.info("No search history available. Run a search to create your first session.")
         st.page_link("pages/2_🔍_Search.py", label="Go to Search", icon="▶️")
         return
 
@@ -115,9 +114,7 @@ def show_history_page() -> None:
         use_container_width=True,
         hide_index=True,
         column_config={
-            "Date": st.column_config.DatetimeColumn(
-                "Date", format="YYYY-MM-DD HH:mm:ss"
-            )
+            "Date": st.column_config.DatetimeColumn("Date", format="YYYY-MM-DD HH:mm:ss")
         },
     )
 

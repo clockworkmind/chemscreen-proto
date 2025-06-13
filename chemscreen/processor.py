@@ -1,13 +1,14 @@
 """Chemical processor module for validation and standardization."""
 
-import re
-from typing import Optional, Any
 import logging
-import pandas as pd
+import re
 from io import StringIO
+from typing import Any, Optional
 
-from chemscreen.models import Chemical, CSVUploadResult, CSVColumnMapping
+import pandas as pd
 from pydantic import ValidationError
+
+from chemscreen.models import Chemical, CSVColumnMapping, CSVUploadResult
 
 logger = logging.getLogger(__name__)
 
@@ -304,9 +305,7 @@ def process_csv_data(
                 if synonyms and synonyms.lower() not in ["nan", "none", "null"]:
                     # Split synonyms by common delimiters
                     syn_list = re.split(r"[;,|]", synonyms)
-                    chemical_data["synonyms"] = [
-                        s.strip() for s in syn_list if s.strip()
-                    ]
+                    chemical_data["synonyms"] = [s.strip() for s in syn_list if s.strip()]
             else:
                 chemical_data["synonyms"] = []
 
@@ -324,9 +323,7 @@ def process_csv_data(
 
             # If we have a name but no CAS, or vice versa, provide a default
             if not chemical_data.get("name") and chemical_data.get("cas_number"):
-                chemical_data["name"] = (
-                    f"Chemical with CAS {chemical_data['cas_number']}"
-                )
+                chemical_data["name"] = f"Chemical with CAS {chemical_data['cas_number']}"
             elif chemical_data.get("name") and not chemical_data.get("cas_number"):
                 # Name exists, CAS is optional
                 pass
@@ -367,8 +364,7 @@ def process_csv_data(
                 "row_number": row_num,
                 "row_data": row.to_dict(),
                 "errors": [
-                    {"field": err["loc"][0], "message": err["msg"]}
-                    for err in e.errors()
+                    {"field": err["loc"][0], "message": err["msg"]} for err in e.errors()
                 ],
             }
             result.invalid_rows.append(error_details)

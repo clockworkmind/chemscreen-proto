@@ -4,23 +4,24 @@ Application utilities for ChemScreen multipage application.
 Contains functions for session state management, demo data loading, and other app utilities.
 """
 
-import streamlit as st
-import pandas as pd
 import logging
+import sys
 import time
 from pathlib import Path
-import sys
+
+import pandas as pd
+import streamlit as st
 
 # Add the chemscreen package to the path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from chemscreen.config import initialize_config
-from chemscreen.models import CSVColumnMapping
 from chemscreen.cached_processors import cached_process_csv_data
+from chemscreen.config import initialize_config
 from chemscreen.errors import (
-    show_error_with_help,
     log_error_for_support,
+    show_error_with_help,
 )
+from chemscreen.models import CSVColumnMapping
 
 logger = logging.getLogger(__name__)
 

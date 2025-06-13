@@ -1,9 +1,10 @@
 """Cached versions of processor functions for performance optimization."""
 
-import streamlit as st
 import pandas as pd
-from chemscreen.models import CSVColumnMapping, CSVUploadResult
+import streamlit as st
+
 from chemscreen import processor
+from chemscreen.models import CSVColumnMapping, CSVUploadResult
 
 
 @st.cache_data(show_spinner=False)

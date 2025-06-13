@@ -1,9 +1,10 @@
 """Data models for ChemScreen using Pydantic."""
 
-from datetime import datetime
-from typing import Optional, Any
-from pydantic import BaseModel, Field, ConfigDict, field_validator
 import re
+from datetime import datetime
+from typing import Any, Optional
+
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 def get_default_max_results() -> int:
@@ -24,9 +25,7 @@ class Chemical(BaseModel):
     name: str = Field(..., description="Chemical name", min_length=1)
     cas_number: Optional[str] = Field(None, description="CAS Registry Number")
     synonyms: list[str] = Field(default_factory=list, description="Alternative names")
-    validated: bool = Field(
-        False, description="Whether the chemical has been validated"
-    )
+    validated: bool = Field(False, description="Whether the chemical has been validated")
     notes: Optional[str] = Field(None, description="Additional notes or comments")
 
     @field_validator("cas_number")
@@ -106,9 +105,7 @@ class SearchResult(BaseModel):
         default_factory=list, description="List of publications"
     )
     error: Optional[str] = Field(None, description="Error message if search failed")
-    search_time_seconds: Optional[float] = Field(
-        None, description="Time taken to search"
-    )
+    search_time_seconds: Optional[float] = Field(None, description="Time taken to search")
     from_cache: bool = Field(False, description="Whether results came from cache")
 
     @property
@@ -155,9 +152,7 @@ class BatchSearchSession(BaseModel):
     results: dict[str, SearchResult] = Field(
         default_factory=dict, description="Results by chemical name"
     )
-    status: str = Field(
-        "pending", description="Status: pending/running/completed/failed"
-    )
+    status: str = Field("pending", description="Status: pending/running/completed/failed")
     progress: float = Field(0.0, ge=0.0, le=1.0, description="Progress percentage")
 
     model_config = ConfigDict(validate_assignment=True)

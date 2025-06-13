@@ -4,10 +4,10 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Any
+from typing import Any, Optional
 
+from chemscreen.config import Config, get_config
 from chemscreen.models import BatchSearchSession
-from chemscreen.config import get_config, Config
 
 logger = logging.getLogger(__name__)
 
@@ -157,9 +157,7 @@ class SessionManager:
             logger.error(f"Failed to delete session {session_id}: {e}")
             return False
 
-    def _update_session_index(
-        self, session: BatchSearchSession, filepath: Path
-    ) -> None:
+    def _update_session_index(self, session: BatchSearchSession, filepath: Path) -> None:
         """Update the session index with new session metadata."""
         try:
             # Load existing index
