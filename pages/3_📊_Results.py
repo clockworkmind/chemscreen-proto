@@ -4,12 +4,10 @@ Results page for ChemScreen multipage application.
 
 import logging
 import sys
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
-
-import logging
-from datetime import datetime
 import streamlit as st
 
 # Add the project root to the path
