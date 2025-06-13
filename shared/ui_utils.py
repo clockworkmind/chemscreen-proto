@@ -4,9 +4,11 @@ UI utilities for ChemScreen multipage application.
 Contains functions for CSS styling, sidebar setup, and other UI components.
 """
 
-import streamlit as st
-from pathlib import Path
 import sys
+from pathlib import Path
+from typing import Any, Tuple
+
+import streamlit as st
 
 # Add the chemscreen package to the path
 sys.path.append(str(Path(__file__).parent.parent))
@@ -224,7 +226,7 @@ def setup_sidebar() -> None:
 
 def create_progress_with_cancel(
     label: str = "Processing...",
-) -> tuple[any, any, any, any]:
+) -> Tuple[Any, Any, Any, Any]:
     """
     Create a progress bar with cancel functionality.
 
@@ -248,7 +250,7 @@ def create_progress_with_cancel(
 
 
 def show_success_with_stats(
-    message: str, stats: dict[str, any], show_balloons: bool = True
+    message: str, stats: dict[str, Any], show_balloons: bool = True
 ) -> None:
     """
     Show success message with statistics.

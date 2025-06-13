@@ -2,34 +2,35 @@
 Export page for ChemScreen multipage application.
 """
 
-import streamlit as st
-from pathlib import Path
-from typing import Optional
+import logging
 import sys
 import time
-import logging
+from pathlib import Path
+from typing import Any, Optional
+
+import streamlit as st
 
 # Add the project root to the path
 sys.path.append(str(Path(__file__).parent.parent))
 
 # Import ChemScreen modules
-from chemscreen.config import initialize_config
-from chemscreen.models import SearchParameters, BatchSearchSession
 from chemscreen.analyzer import calculate_quality_metrics
-from chemscreen.exporter import ExportManager
+from chemscreen.config import initialize_config
 from chemscreen.errors import (
-    show_error_with_help,
     log_error_for_support,
+    show_error_with_help,
 )
+from chemscreen.exporter import ExportManager
+from chemscreen.models import BatchSearchSession, SearchParameters
+from shared.app_utils import init_session_state
 
 # Import shared utilities
 from shared.ui_utils import (
+    create_progress_with_cancel,
     load_custom_css,
     setup_sidebar,
-    create_progress_with_cancel,
     show_success_with_stats,
 )
-from shared.app_utils import init_session_state
 
 # Initialize configuration and logging
 config = initialize_config()
@@ -121,6 +122,10 @@ def show_export_page() -> None:
     # Export button with real export functionality
     if st.button("📥 Generate Export", type="primary"):
         # Create progress indicators for export
+        progress_bar: Any
+        status_text: Any
+        cancel_button: Any
+        progress_container: Any
         progress_bar, status_text, cancel_button, progress_container = (
             create_progress_with_cancel("Generating export")
         )
@@ -133,7 +138,7 @@ def show_export_page() -> None:
             status_text.text("📊 Collecting search results...")
             progress_bar.progress(0.2)
 
-            if cancel_button:
+            if bool(cancel_button):
                 st.warning("⏸️ Export cancelled by user")
                 progress_container.empty()
                 return

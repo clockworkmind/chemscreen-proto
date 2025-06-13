@@ -2,39 +2,41 @@
 Upload Chemicals page for ChemScreen multipage application.
 """
 
-import streamlit as st
-from pathlib import Path
-import sys
-import pandas as pd
 import logging
+import sys
+from pathlib import Path
+from typing import Any
+
+import pandas as pd
+import streamlit as st
 
 # Add the project root to the path
 sys.path.append(str(Path(__file__).parent.parent))
 
 # Import ChemScreen modules
-from chemscreen.config import initialize_config
-from chemscreen.processor import merge_duplicates, detect_duplicates
-from chemscreen.models import CSVColumnMapping
 from chemscreen.cached_processors import (
     cached_process_csv_data,
     cached_suggest_column_mapping,
 )
+from chemscreen.config import initialize_config
 from chemscreen.errors import (
+    log_error_for_support,
     show_error_with_help,
     show_validation_help,
-    log_error_for_support,
 )
+from chemscreen.models import CSVColumnMapping
+from chemscreen.processor import detect_duplicates, merge_duplicates
+from shared.app_utils import init_session_state
 
 # Import shared utilities
 from shared.ui_utils import (
+    create_progress_with_cancel,
+    get_feature_help,
     load_custom_css,
     setup_sidebar,
-    create_progress_with_cancel,
-    show_success_with_stats,
     show_help_tooltip,
-    get_feature_help,
+    show_success_with_stats,
 )
-from shared.app_utils import init_session_state
 
 # Initialize configuration and logging
 config = initialize_config()
@@ -316,12 +318,14 @@ def show_upload_page() -> None:
                             preview_cols.append(name_col)
                         if cas_col != "None":
                             preview_cols.append(cas_col)
-                        st.dataframe(
-                            df[preview_cols].head(10), use_container_width=True
-                        )
+                        st.dataframe(df[preview_cols].head(10), use_container_width=True)
 
                     if st.button("Process Chemicals", type="primary"):
                         # Create progress indicators with cancel option
+                        progress_bar: Any
+                        status_text: Any
+                        cancel_button: Any
+                        progress_container: Any
                         progress_bar, status_text, cancel_button, progress_container = (
                             create_progress_with_cancel("Processing chemicals")
                         )
@@ -338,13 +342,12 @@ def show_upload_page() -> None:
                             progress_bar.progress(0.1)
 
                             # Check for cancellation
-                            if cancel_button:
+                            if bool(cancel_button):
                                 st.warning("⏸️ Processing cancelled by user")
                                 progress_container.empty()
                                 return
 
                             # Initial validation and batch size check
-                            MAX_BATCH_SIZE = config.max_batch_size
                             if len(df) > MAX_BATCH_SIZE:
                                 show_error_with_help(
                                     "batch_too_large",
@@ -478,9 +481,7 @@ def show_upload_page() -> None:
                                                 f"Showing first 10 of {len(result.valid_chemicals)} chemicals"
                                             )
                             else:
-                                st.error(
-                                    "No valid chemicals found in the uploaded file."
-                                )
+                                st.error("No valid chemicals found in the uploaded file.")
 
                         except Exception as e:
                             show_error_with_help("processing_failed", str(e))
